@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noEmitOnError": true,
+    "strictNullChecks": true,
+    "target": "es2015",
+    "sourceMap": true
+  },
+  "include": [
+    "main/*.ts",
+    "typings/**/*.d.ts"
+  ]
+}
+

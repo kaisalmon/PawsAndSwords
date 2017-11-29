@@ -1,0 +1,113 @@
+@mixin icon($icon) {
+    filter: invert(100%);
+    background-image: url("https://kaisalmon.com/cardgame/include/loadImage.php?icon="+$icon); 
+    background-size: 100% 100%;
+}
+@mixin text-outline($color) {
+    text-shadow: 2px 0px black,
+                 -2px 0px black,
+                 0px  2px black,
+                 0px -2px black,
+                2px 2px black,
+                 -2px 2px black,
+                 2px -2px black,
+                 -2px -2px black;
+}
+
+
+.choosable{
+    transition: filter 0.5s;
+    &--highlighted{
+        cursor: pointer;
+        filter: drop-shadow(0 0 2px white) 
+                drop-shadow(0 0 1px orange) 
+                drop-shadow(0 0 1px red);
+
+        &:hover{
+            filter: brightness(125%)
+                    drop-shadow(0 0 3px white) 
+                    drop-shadow(0 0 2px orange) 
+                    drop-shadow(0 0 2px red);
+        }
+    }
+}
+
+.card, .hero {
+  font-family: 'Rokkitt';
+  border: 4px solid black;
+  border-radius: 5px ;
+  //width: 5cm ;
+  //height: 7cm;
+  padding: 0.25cm;
+  margin: 6px;
+  display: inline-block;
+  position: relative;
+  background-color: white;
+
+
+    
+  & + &{
+    margin-right: 15px;
+  }
+    
+  > * {
+    box-sizing: border-box;
+  }
+
+  &__titlebar {
+    @include text-outline(black);
+    color:orange;
+    overflow: hidden;
+    padding: 0.25cm;
+    padding-top:0;
+    margin-bottom: 0.25cm;
+    border-bottom: solid black 4px;
+    width: 100%;
+    font-weight: bold;
+    font-size: 22px;
+    line-height:150%;
+    text-align: center;
+    height: 40px;
+    vertical-align: middle;
+    overflow-x: hidden;
+    white-space: nowrap;
+  }
+
+  &__icon{
+    width: 4cm;
+    height:4cm;
+    margin-left:0.5cm;                       
+
+
+ 
+    filter: invert(100%);
+  }
+  &__stats{
+    display:flex;
+    justify-content:space-between;
+  }
+  &__strength, &__arcana, &__health{
+      @include text-outline(black);
+      color:white;
+      width:1cm;
+      height:1cm;
+      line-height: 150%;
+      text-align:center;
+      font-size: 0.7cm;
+      display: inline-block; 
+  }
+  &__strength{
+      @include icon(crossed-swords);
+  }
+  &__arcana{
+      @include icon(seven-pointed-star);
+  }
+  &__health{
+      @include icon(hearts);
+  }
+
+  transition: transform 0.4s;
+  &.active{
+    transform: scale(1.2);
+  }
+}
