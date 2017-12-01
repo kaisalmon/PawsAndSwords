@@ -30,17 +30,26 @@ class GameRenderer{
         for(let c of this.game.partyA.hand){
             c.render().appendTo(this.$handA);
         }
-        this.$boardA.empty();
         for(let h of this.game.partyA.heros){
-            h.render().appendTo(this.$boardA);
+            if(!h.$hero){
+                h.render().addClass('animated bounceIn').appendTo(this.$boardA);
+                setTimeout(()=>h.getElem().removeClass('bounceIn'), 1000);
+            }else{
+                h.rerender();
+            }
         }
+
         this.$handB.empty();
         for(let c of this.game.partyB.hand){
             c.render().appendTo(this.$handB);
         }
-        this.$boardB.empty();
         for(let h of this.game.partyB.heros){
-            h.render().appendTo(this.$boardB);
+            if(!h.$hero){
+                h.render().addClass('animated bounceIn').appendTo(this.$boardB);
+                setTimeout(()=>h.getElem().removeClass('bounceIn'), 1000);
+            }else{
+                h.rerender();
+            }
         }
     } 
 }

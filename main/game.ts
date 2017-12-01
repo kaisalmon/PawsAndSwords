@@ -51,7 +51,7 @@ export abstract class Party{
         if(this.opponent){
             return this.opponent;
         }
-        throw "Party requested but not defined";
+        throw "Opponent requested but not defined";
     }
     getPossibleActions() : Choosable[]{
         let r : Choosable[] = [];
@@ -72,11 +72,17 @@ export abstract class Party{
     }
 
     onNewTurn(): void{
-        console.log("New turn");
         this.playedHero = false;
         for(let h of this.heros){
             h.onNewTurn();
         }
+        /*
+        let handSize = this.hand.length;
+        let toDraw = 5 - handSize;
+        for(let i = 0; i < toDraw; i++){
+            this.drawCard();
+        }
+        */
     }
 
     async playTurn() : Promise<{}>{
@@ -166,5 +172,30 @@ export class Game{
             await this.partyB.playTurn();
         }
         return new Promise((resolve)=>resolve());
+    }
+}
+
+export class Zone extends Choosable{
+    heroA: Hero.Hero|undefined;
+    heroB: Hero.Hero|undefined;
+    $zone: JQuery|undefined;
+
+    getElem(): JQuery{
+        if(!this.$zone){
+            this.$zone = $('<div/>').addClass('zone')
+            $('<div/>').appendTo(this.$zone).addClass('zone__A')
+            $('<div/>').appendTo(this.$zone).addClass('zone__B')
+        }
+        return this.$zone; 
+    }
+
+    addHero(player:"a"|"b", hero:Hero.Hero ){
+        if(player == "a"){
+            this.heroA = hero;
+            this.getElem().find('.zone__A').append(hero.render())
+        }else{
+            this.heroB = hero;
+            this.getElem().find('.zone__B').append(hero.render())
+        }
     }
 }

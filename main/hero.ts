@@ -44,6 +44,9 @@ export class Hero extends Game.Choosable{
     getMaxHealth() : number{
         return this.raceCard.health + this.classCard.health;
     }
+    getHealth() : number{
+        return this.getMaxHealth() - this.damage;
+    }
     getRoles() : Cards.Role[]{
         return [this.classCard.role]
     }
@@ -79,7 +82,14 @@ export class Hero extends Game.Choosable{
         if(!this.$hero){
             throw "Hero not rendered";
         } 
-        this.$hero.text(this.getName());
+        this.$hero.empty();
+        $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo(this.$hero);
+        let $row = $('<div/>').addClass('hero__stats').appendTo(this.$hero);
+        $('<div/>').addClass('hero__strength').appendTo($row).text(this.getStrength())
+        $('<div/>').addClass('hero__arcana').appendTo($row).text(this.getArcana())
+        let damaged = this.getHealth() < this.getMaxHealth();
+        $('<div/>').addClass('hero__health').appendTo($row).text(this.getHealth()).addClass(damaged ? "hero__health--damaged" : "")
+ 
     }
     getElem() : JQuery{
         if(this.$hero){

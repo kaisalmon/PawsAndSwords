@@ -4,7 +4,7 @@ export abstract class Effect {
     abstract description(): string;
 }
 export abstract class HeroEffect extends Effect {
-    abstract apply(user:Hero.Hero, target:Hero.Hero): void;
+    abstract async apply(user:Hero.Hero, target:Hero.Hero): Promise<{}>;
 }
 
 export function parseEffects(json: any): Effect[]{
@@ -34,14 +34,28 @@ export class he_Damage extends HeroEffect{
         this.amount = amount;
     }
 
-    apply(user:Hero.Hero, target:Hero.Hero): void{
-        let val = this.amount.val(user);
-        console.log(user.getName()+" deals "+val+" damage to "+target.getName());
-        target.damage += val;
+    async apply(user:Hero.Hero, target:Hero.Hero): Promise<{}>{
+        return new Promise((resolve)=>
+            {
+                let val = this.amount.val(user);
+                target.damage += val;
+                if(target.$hero){
+                    target.$hero.addClass('animated shake')
+                    target.rerender();
+                    setTimeout(()=>{
+                        if(target.$hero){
+                            target.$hero.removeClass('shake');
+                        }
+                        resolve();
+                    },1000)
+                }else{
+                    resolve();     
+                }
+            })
     }
 
     description(): string{
-        return "deal "+this.amount+" damage to %target%";
+        return "deal "+this.amount+" damage to %to target%";
     }
 }
 
@@ -53,14 +67,15 @@ export class he_AllFoes extends HeroEffect{
         this.effects = effects;
     }
 
-    apply(user:Hero.Hero, target:Hero.Hero): void{
+    async apply(user:Hero.Hero, target:Hero.Hero): Promise<{}>{
         let foes: Hero.Hero[] = [];
         foes = user.getParty().getOpponent().heros;
         for(let f of foes){
             for(let e of this.effects){
-                e.apply(user, f);
+                await e.apply(user, f);
             }
         }
+        return new Promise((resolve)=>resolve());
     }
 
     description(): string{

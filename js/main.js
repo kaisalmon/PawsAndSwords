@@ -94,7 +94,9 @@ class ActionCard extends Card {
     }
     apply(hero) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.effects.map((e) => __awaiter(this, void 0, void 0, function* () { yield e.apply(hero, hero); }));
+            for (let e of this.effects) {
+                yield e.apply(hero, hero);
+            }
             return new Promise((resolve) => resolve());
         });
     }
@@ -121,6 +123,14 @@ exports.HeroComponent = HeroComponent;
 
 },{"./effects":2,"./game":3,"jquery":6}],2:[function(require,module,exports){
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const Hero = require("./hero");
 class Effect {
@@ -154,12 +164,28 @@ class he_Damage extends HeroEffect {
         this.amount = amount;
     }
     apply(user, target) {
-        let val = this.amount.val(user);
-        console.log(user.getName() + " deals " + val + " damage to " + target.getName());
-        target.damage += val;
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => {
+                let val = this.amount.val(user);
+                target.damage += val;
+                if (target.$hero) {
+                    target.$hero.addClass('animated shake');
+                    target.rerender();
+                    setTimeout(() => {
+                        if (target.$hero) {
+                            target.$hero.removeClass('shake');
+                        }
+                        resolve();
+                    }, 1000);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
     }
     description() {
-        return "deal " + this.amount + " damage to %target%";
+        return "deal " + this.amount + " damage to %to target%";
     }
 }
 exports.he_Damage = he_Damage;
@@ -169,13 +195,16 @@ class he_AllFoes extends HeroEffect {
         this.effects = effects;
     }
     apply(user, target) {
-        let foes = [];
-        foes = user.getParty().getOpponent().heros;
-        for (let f of foes) {
-            for (let e of this.effects) {
-                e.apply(user, f);
+        return __awaiter(this, void 0, void 0, function* () {
+            let foes = [];
+            foes = user.getParty().getOpponent().heros;
+            for (let f of foes) {
+                for (let e of this.effects) {
+                    yield e.apply(user, f);
+                }
             }
-        }
+            return new Promise((resolve) => resolve());
+        });
     }
     description() {
         return this.effects.map((e) => e.description().replace(/%target%/, "all foes")).join(",");
@@ -238,7 +267,7 @@ class Party {
         if (this.opponent) {
             return this.opponent;
         }
-        throw "Party requested but not defined";
+        throw "Opponent requested but not defined";
     }
     getPossibleActions() {
         let r = [];
@@ -258,11 +287,17 @@ class Party {
         return r;
     }
     onNewTurn() {
-        console.log("New turn");
         this.playedHero = false;
         for (let h of this.heros) {
             h.onNewTurn();
         }
+        /*
+        let handSize = this.hand.length;
+        let toDraw = 5 - handSize;
+        for(let i = 0; i < toDraw; i++){
+            this.drawCard();
+        }
+        */
     }
     playTurn() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -359,6 +394,27 @@ class Game {
     }
 }
 exports.Game = Game;
+class Zone extends Choosable {
+    getElem() {
+        if (!this.$zone) {
+            this.$zone = $('<div/>').addClass('zone');
+            $('<div/>').appendTo(this.$zone).addClass('zone__A');
+            $('<div/>').appendTo(this.$zone).addClass('zone__B');
+        }
+        return this.$zone;
+    }
+    addHero(player, hero) {
+        if (player == "a") {
+            this.heroA = hero;
+            this.getElem().find('.zone__A').append(hero.render());
+        }
+        else {
+            this.heroB = hero;
+            this.getElem().find('.zone__B').append(hero.render());
+        }
+    }
+}
+exports.Zone = Zone;
 
 },{"./cards":1,"./hero":4}],4:[function(require,module,exports){
 "use strict";
@@ -406,6 +462,9 @@ class Hero extends Game.Choosable {
     getMaxHealth() {
         return this.raceCard.health + this.classCard.health;
     }
+    getHealth() {
+        return this.getMaxHealth() - this.damage;
+    }
     getRoles() {
         return [this.classCard.role];
     }
@@ -442,7 +501,13 @@ class Hero extends Game.Choosable {
         if (!this.$hero) {
             throw "Hero not rendered";
         }
-        this.$hero.text(this.getName());
+        this.$hero.empty();
+        $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo(this.$hero);
+        let $row = $('<div/>').addClass('hero__stats').appendTo(this.$hero);
+        $('<div/>').addClass('hero__strength').appendTo($row).text(this.getStrength());
+        $('<div/>').addClass('hero__arcana').appendTo($row).text(this.getArcana());
+        let damaged = this.getHealth() < this.getMaxHealth();
+        $('<div/>').addClass('hero__health').appendTo($row).text(this.getHealth()).addClass(damaged ? "hero__health--damaged" : "");
     }
     getElem() {
         if (this.$hero) {
@@ -508,17 +573,27 @@ class GameRenderer {
         for (let c of this.game.partyA.hand) {
             c.render().appendTo(this.$handA);
         }
-        this.$boardA.empty();
         for (let h of this.game.partyA.heros) {
-            h.render().appendTo(this.$boardA);
+            if (!h.$hero) {
+                h.render().addClass('animated bounceIn').appendTo(this.$boardA);
+                setTimeout(() => h.getElem().removeClass('bounceIn'), 1000);
+            }
+            else {
+                h.rerender();
+            }
         }
         this.$handB.empty();
         for (let c of this.game.partyB.hand) {
             c.render().appendTo(this.$handB);
         }
-        this.$boardB.empty();
         for (let h of this.game.partyB.heros) {
-            h.render().appendTo(this.$boardB);
+            if (!h.$hero) {
+                h.render().addClass('animated bounceIn').appendTo(this.$boardB);
+                setTimeout(() => h.getElem().removeClass('bounceIn'), 1000);
+            }
+            else {
+                h.rerender();
+            }
         }
     }
 }
