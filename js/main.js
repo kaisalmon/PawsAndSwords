@@ -225,6 +225,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Hero = require("./hero");
 const Cards = require("./cards");
+const $ = require("jquery");
 class Choosable {
     highlight() {
         this.getElem().addClass('choosable');
@@ -247,12 +248,13 @@ class ChoiceFailed extends Error {
     }
 }
 class Party {
-    constructor(deck) {
+    constructor(game, deck) {
         this.opponent = null;
         this.deck = [];
         this.hand = [];
         this.heros = [];
         this.playedHero = false;
+        this.game = game;
         this.deck = deck;
         this.hand = deck.slice();
         this.onUpdate = () => { };
@@ -310,9 +312,10 @@ class Party {
                     let raceCard = choice;
                     raceCard.getElem().addClass('active');
                     let classCard = yield this.makeChoice(this.hand.filter((c) => c.type == Cards.CardType.CLASS));
+                    let zone = yield this.makeChoice(this.game.zones);
                     this.discard(classCard);
                     this.discard(raceCard);
-                    this.addHero(new Hero.Hero(raceCard, classCard));
+                    this.addHero(new Hero.Hero(raceCard, classCard, zone));
                 }
                 else if (choice instanceof Cards.ActionCard) {
                     let action = choice;
@@ -377,10 +380,11 @@ class RandomParty extends Party {
 exports.RandomParty = RandomParty;
 class Game {
     constructor(deckA, deckB) {
-        this.partyA = new UIParty(deckA);
-        this.partyB = new RandomParty(deckB);
+        this.partyA = new UIParty(this, deckA);
+        this.partyB = new RandomParty(this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
+        this.zones = [new Zone()];
     }
     play() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -416,7 +420,7 @@ class Zone extends Choosable {
 }
 exports.Zone = Zone;
 
-},{"./cards":1,"./hero":4}],4:[function(require,module,exports){
+},{"./cards":1,"./hero":4,"jquery":6}],4:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -437,7 +441,7 @@ function sleep(seconds) {
     });
 }
 class Hero extends Game.Choosable {
-    constructor(raceCard, classCard) {
+    constructor(raceCard, classCard, zone) {
         super();
         //status flags
         this.usedAction = false;
@@ -445,6 +449,7 @@ class Hero extends Game.Choosable {
         this.classCard = classCard;
         this.raceCard = raceCard;
         this.damage = 0;
+        this.zone = zone;
     }
     onNewTurn() {
         this.usedAction = false;

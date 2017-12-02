@@ -1,5 +1,6 @@
 import * as Hero from "./hero";
 import * as Cards from "./cards";
+import * as $ from "jquery";
 
 export abstract class Choosable{
     abstract getElem(): JQuery; 
@@ -30,12 +31,14 @@ export abstract class Party{
     deck: Cards.Card[] = [];
     hand: Cards.Card[] = [];
     heros: Hero.Hero[] = [];
+    game: Game;
 
     playedHero: boolean = false;
 
     onUpdate: ()=>void;
    
-    constructor(deck:Cards.Card[]){
+    constructor(game: Game, deck:Cards.Card[]){
+        this.game = game;
         this.deck = deck;
         this.hand = deck.slice();
         this.onUpdate = ()=>{};
@@ -97,9 +100,10 @@ export abstract class Party{
                 let classCard = await this.makeChoice(
                     this.hand.filter((c)=>c.type == Cards.CardType.CLASS)
                 ) as Cards.HeroComponent;
+                let zone: Zone = await this.makeChoice(this.game.zones) as Zone;
                 this.discard(classCard);
                 this.discard(raceCard);
-                this.addHero(new Hero.Hero(raceCard, classCard));
+                this.addHero(new Hero.Hero(raceCard, classCard, zone));
             }else if(choice instanceof Cards.ActionCard){
                 let action = choice;
                 choice.getElem().addClass('active');
@@ -159,11 +163,13 @@ export class RandomParty extends Party{
 export class Game{
     partyA: Party;
     partyB: Party;
+    zones: Zone[];
     constructor(deckA:Cards.Card[], deckB:Cards.Card[]){
-        this.partyA = new UIParty(deckA);
-        this.partyB = new RandomParty(deckB);
+        this.partyA = new UIParty(this, deckA);
+        this.partyB = new RandomParty(this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
+        this.zones = [new Zone()];
     }
     async play(): Promise<{}>{
         const limit = 30;

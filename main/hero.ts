@@ -16,16 +16,18 @@ export class Hero extends Game.Choosable{
     damage: number;
     party: Game.Party;
     $hero: JQuery | undefined;
+    zone: Game.Zone;
 
     //status flags
     usedAction: boolean = false;
     justJoined: boolean = true;
 
-    constructor(raceCard: Cards.HeroComponent, classCard: Cards.HeroComponent){
+    constructor(raceCard: Cards.HeroComponent, classCard: Cards.HeroComponent, zone: Game.Zone){
         super();
         this.classCard = classCard;
         this.raceCard = raceCard;
         this.damage = 0;
+        this.zone = zone;
     }
     onNewTurn() : void{
         this.usedAction = false;
