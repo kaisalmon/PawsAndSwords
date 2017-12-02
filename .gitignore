@@ -4,3 +4,4 @@ bundle.js
 .sass-cache
 
 main/*.js
+css/*.css
