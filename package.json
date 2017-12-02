@@ -1,0 +1,23 @@
+{
+  "name": "paws-and-swords",
+  "version": "0.0.1",
+  "description": "A Virtual Card Game by Kai Salmon",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaisalmon/PawsAndSwords.git"
+  },
+  "keywords": [
+    "virtual-card-game",
+    "card-game"
+  ],
+  "author": "Kai Salmon",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kaisalmon/PawsAndSwords/issues"
+  },
+  "homepage": "https://github.com/kaisalmon/PawsAndSwords#readme"
+}
