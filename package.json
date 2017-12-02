@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/kaisalmon/PawsAndSwords/issues"
   },
-  "homepage": "https://github.com/kaisalmon/PawsAndSwords#readme"
+  "homepage": "https://github.com/kaisalmon/PawsAndSwords#readme",
+  "dependencies": {
+    "jquery": "^3.2.1"
+  }
 }
