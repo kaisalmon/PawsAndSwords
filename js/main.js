@@ -312,10 +312,13 @@ class Party {
                     let raceCard = choice;
                     raceCard.getElem().addClass('active');
                     let classCard = yield this.makeChoice(this.hand.filter((c) => c.type == Cards.CardType.CLASS));
+                    classCard.getElem().addClass('active');
                     let zone = yield this.makeChoice(this.game.zones);
                     this.discard(classCard);
                     this.discard(raceCard);
-                    this.addHero(new Hero.Hero(raceCard, classCard, zone));
+                    let h = new Hero.Hero(raceCard, classCard, zone);
+                    this.addHero(h);
+                    zone.addHero(this.game.activeId, h);
                 }
                 else if (choice instanceof Cards.ActionCard) {
                     let action = choice;
@@ -380,17 +383,20 @@ class RandomParty extends Party {
 exports.RandomParty = RandomParty;
 class Game {
     constructor(deckA, deckB) {
+        this.activeId = 'a';
         this.partyA = new UIParty(this, deckA);
         this.partyB = new RandomParty(this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
-        this.zones = [new Zone()];
+        this.zones = [new Zone(), new Zone(), new Zone(true), new Zone(), new Zone()]; //5 zones, with center zone marked
     }
     play() {
         return __awaiter(this, void 0, void 0, function* () {
             const limit = 30;
             for (let i = 0; i < limit; i++) {
+                this.activeId = 'a';
                 yield this.partyA.playTurn();
+                this.activeId = 'b';
                 yield this.partyB.playTurn();
             }
             return new Promise((resolve) => resolve());
@@ -399,11 +405,15 @@ class Game {
 }
 exports.Game = Game;
 class Zone extends Choosable {
+    constructor(center = false) {
+        super();
+        this.center = true;
+    }
     getElem() {
         if (!this.$zone) {
             this.$zone = $('<div/>').addClass('zone');
-            $('<div/>').appendTo(this.$zone).addClass('zone__A');
             $('<div/>').appendTo(this.$zone).addClass('zone__B');
+            $('<div/>').appendTo(this.$zone).addClass('zone__A');
         }
         return this.$zone;
     }
@@ -416,6 +426,8 @@ class Zone extends Choosable {
             this.heroB = hero;
             this.getElem().find('.zone__B').append(hero.render());
         }
+        hero.getElem().addClass('animated bounceIn');
+        setTimeout(() => hero.getElem().removeClass('bounceIn'), 1000);
     }
 }
 exports.Zone = Zone;
@@ -559,11 +571,7 @@ const Game = require("./game");
 class GameRenderer {
     constructor(game) {
         this.game = game;
-        this.$boardA = $('<div/>').css('position', 'fixed')
-            .css('bottom', '200px')
-            .appendTo('body');
-        this.$boardB = $('<div/>').css('position', 'fixed')
-            .css('top', '200px')
+        this.$board = $('<div/>').addClass('zones')
             .appendTo('body');
         this.$handA = $('<div/>').css('position', 'fixed')
             .css('bottom', '0')
@@ -578,27 +586,13 @@ class GameRenderer {
         for (let c of this.game.partyA.hand) {
             c.render().appendTo(this.$handA);
         }
-        for (let h of this.game.partyA.heros) {
-            if (!h.$hero) {
-                h.render().addClass('animated bounceIn').appendTo(this.$boardA);
-                setTimeout(() => h.getElem().removeClass('bounceIn'), 1000);
-            }
-            else {
-                h.rerender();
-            }
-        }
         this.$handB.empty();
         for (let c of this.game.partyB.hand) {
             c.render().appendTo(this.$handB);
         }
-        for (let h of this.game.partyB.heros) {
-            if (!h.$hero) {
-                h.render().addClass('animated bounceIn').appendTo(this.$boardB);
-                setTimeout(() => h.getElem().removeClass('bounceIn'), 1000);
-            }
-            else {
-                h.rerender();
-            }
+        this.$board.empty();
+        for (let z of this.game.zones) {
+            z.getElem().appendTo(this.$board);
         }
     }
 }

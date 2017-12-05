@@ -9,7 +9,9 @@ class GameRenderer{
     $board: JQuery;
     constructor(game:Game.Game){
         this.game = game;
-        this.$board = $('<div/>').addClass('zones')
+        this.$board = $('<div/>').css('position', 'fixed')
+                                 .css('bottom','300px')
+                                 .css('top','300px')
                                  .appendTo('body');
         this.$handA = $('<div/>').css('position', 'fixed')
                                  .css('bottom', '0')

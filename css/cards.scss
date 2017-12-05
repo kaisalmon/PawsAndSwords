@@ -115,3 +115,41 @@
     transform: scale(1.2);
   }
 }
+
+
+.zones{
+    $r: 20vmin;
+
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    top: 50%;
+    transform: translatey(-50%);
+    
+    .zone{
+        border:1px solid rgba(255,255,255,0.4);
+        padding:2px;
+
+        &__B, &__A{
+            border:1px solid rgba(255,255,255,0.4);
+            width:$r;
+            height: $r;
+        }
+
+        &.choosable--highlighted{
+            cursor: pointer;
+            filter: drop-shadow(0 0 2px white) 
+                    drop-shadow(0 0 1px cyan) 
+                    drop-shadow(0 0 1px blue);
+
+            &:hover{
+                filter: brightness(125%)
+                        drop-shadow(0 0 3px white) 
+                        drop-shadow(0 0 2px cyan) 
+                        drop-shadow(0 0 2px blue);
+            }
+        }
+    }
+}

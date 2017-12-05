@@ -100,10 +100,15 @@ export abstract class Party{
                 let classCard = await this.makeChoice(
                     this.hand.filter((c)=>c.type == Cards.CardType.CLASS)
                 ) as Cards.HeroComponent;
+
+                classCard.getElem().addClass('active')
                 let zone: Zone = await this.makeChoice(this.game.zones) as Zone;
                 this.discard(classCard);
                 this.discard(raceCard);
-                this.addHero(new Hero.Hero(raceCard, classCard, zone));
+
+                let h = new Hero.Hero(raceCard, classCard, zone);
+                this.addHero(h);
+                zone.addHero(this.game.activeId, h);
             }else if(choice instanceof Cards.ActionCard){
                 let action = choice;
                 choice.getElem().addClass('active');
@@ -164,17 +169,20 @@ export class Game{
     partyA: Party;
     partyB: Party;
     zones: Zone[];
+    activeId: 'a'|'b' = 'a';
     constructor(deckA:Cards.Card[], deckB:Cards.Card[]){
         this.partyA = new UIParty(this, deckA);
         this.partyB = new RandomParty(this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
-        this.zones = [new Zone()];
+        this.zones = [new Zone(),new Zone(),new Zone(true),new Zone(),new Zone()]; //5 zones, with center zone marked
     }
     async play(): Promise<{}>{
         const limit = 30;
         for(let i = 0; i < limit; i++){
+            this.activeId = 'a';
             await this.partyA.playTurn();
+            this.activeId = 'b';
             await this.partyB.playTurn();
         }
         return new Promise((resolve)=>resolve());
@@ -182,15 +190,21 @@ export class Game{
 }
 
 export class Zone extends Choosable{
+    center: boolean;
     heroA: Hero.Hero|undefined;
     heroB: Hero.Hero|undefined;
     $zone: JQuery|undefined;
+    
+    constructor(center: boolean = false){
+        super();
+        this.center = true;
+    }
 
     getElem(): JQuery{
         if(!this.$zone){
             this.$zone = $('<div/>').addClass('zone')
-            $('<div/>').appendTo(this.$zone).addClass('zone__A')
             $('<div/>').appendTo(this.$zone).addClass('zone__B')
+            $('<div/>').appendTo(this.$zone).addClass('zone__A')
         }
         return this.$zone; 
     }
@@ -203,5 +217,9 @@ export class Zone extends Choosable{
             this.heroB = hero;
             this.getElem().find('.zone__B').append(hero.render())
         }
+        hero.getElem().addClass('animated bounceIn');
+        setTimeout(()=>
+            hero.getElem().removeClass('bounceIn')
+        , 1000);
     }
 }
