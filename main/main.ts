@@ -53,6 +53,12 @@ let all_cards_json = [
             {type:"damage", amount:"A + 1"}
         ]} 
     ]},
+
+    {name:"Smite", type:"spell",icon:"winged-sword", effects:[
+        {type:"attack", effects:[
+            {type:"damage", amount:"A + S"}
+        ]} 
+    ]},
 ]
 
 let deckA:Cards.Card[] = [];

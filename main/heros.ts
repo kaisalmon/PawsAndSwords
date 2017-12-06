@@ -58,6 +58,11 @@ export class Hero extends Game.Choosable{
         }
         throw "Party requested but not defined";
     }
+
+    getMeleeFoe(): Hero|undefined{
+        return this.zone.getHero(this.party.label == 'a' ? 'b' : 'a');
+    }
+
     canUseAction(a: Cards.ActionCard){
         if(this.justJoined || this.usedAction){
             return false;

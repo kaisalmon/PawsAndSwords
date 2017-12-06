@@ -87,9 +87,9 @@ class ActionCard extends Card {
     render() {
         var $card = super.render();
         var descriptions = this.effects.map((e) => e.description());
-        var description = descriptions.join(", ").replace(/%target%/g, "this hero");
+        var description = descriptions.join(", ").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
         description = description.charAt(0).toUpperCase() + description.slice(1);
-        $('<div/>').addClass('card__description').appendTo($card).text(description);
+        $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
     }
     apply(hero) {
@@ -139,6 +139,11 @@ exports.Effect = Effect;
 class HeroEffect extends Effect {
 }
 exports.HeroEffect = HeroEffect;
+class EffectFailed extends Error {
+    constructor() {
+        super("Effect Failed");
+    }
+}
 function parseEffects(json) {
     return json.map((json_e) => {
         var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
@@ -150,6 +155,9 @@ function parseEffects(json) {
             }
             case "all_foes": {
                 return new he_AllFoes(effects);
+            }
+            case "attack": {
+                return new he_Attack(effects);
             }
             default: {
                 throw "Unknown effect " + json_e.type;
@@ -185,7 +193,7 @@ class he_Damage extends HeroEffect {
         });
     }
     description() {
-        return "deal " + this.amount + " damage to %to target%";
+        return "deal " + this.amount + " damage %to target%";
     }
 }
 exports.he_Damage = he_Damage;
@@ -207,10 +215,32 @@ class he_AllFoes extends HeroEffect {
         });
     }
     description() {
-        return this.effects.map((e) => e.description().replace(/%target%/, "all foes")).join(",");
+        return this.effects.map((e) => e.description().replace(/%target%/, "all foes").replace(/%to target%/, "to all foes")).join(",");
     }
 }
 exports.he_AllFoes = he_AllFoes;
+class he_Attack extends HeroEffect {
+    constructor(effects) {
+        super();
+        this.effects = effects;
+    }
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let foe = target.getMeleeFoe();
+            if (foe) {
+                for (let e of this.effects) {
+                    yield e.apply(user, foe);
+                }
+                return new Promise((resolve) => resolve());
+            }
+            throw new EffectFailed();
+        });
+    }
+    description() {
+        return this.effects.map((e) => '<b>Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
+    }
+}
+exports.he_Attack = he_Attack;
 
 },{"./heros":4}],3:[function(require,module,exports){
 "use strict";
@@ -526,6 +556,9 @@ class Hero extends Game.Choosable {
         }
         throw "Party requested but not defined";
     }
+    getMeleeFoe() {
+        return this.zone.getHero(this.party.label == 'a' ? 'b' : 'a');
+    }
     canUseAction(a) {
         if (this.justJoined || this.usedAction) {
             return false;
@@ -642,6 +675,11 @@ let all_cards_json = [
     { name: "Magic Missile", type: "spell", icon: "ringed-beam", effects: [
             { type: "all_foes", effects: [
                     { type: "damage", amount: "A + 1" }
+                ] }
+        ] },
+    { name: "Smite", type: "spell", icon: "winged-sword", effects: [
+            { type: "attack", effects: [
+                    { type: "damage", amount: "A + S" }
                 ] }
         ] },
 ];

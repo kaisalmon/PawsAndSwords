@@ -7,6 +7,12 @@ export abstract class HeroEffect extends Effect {
     abstract async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>;
 }
 
+class EffectFailed extends Error {
+     constructor() {
+        super("Effect Failed");
+     }
+}
+
 export function parseEffects(json: any): Effect[]{
     return json.map((json_e: any) => {
         var amount : Heros.Amount| undefined = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
@@ -18,6 +24,9 @@ export function parseEffects(json: any): Effect[]{
             }
             case "all_foes":{
                 return new he_AllFoes(effects as HeroEffect[]);
+            }
+            case "attack":{
+                return new he_Attack(effects as HeroEffect[]);
             }
             default:{
                 throw "Unknown effect "+json_e.type;
@@ -55,7 +64,7 @@ export class he_Damage extends HeroEffect{
     }
 
     description(): string{
-        return "deal "+this.amount+" damage to %to target%";
+        return "deal "+this.amount+" damage %to target%";
     }
 }
 
@@ -80,7 +89,33 @@ export class he_AllFoes extends HeroEffect{
 
     description(): string{
         return this.effects.map(
-            (e) => e.description().replace(/%target%/, "all foes")
+            (e) => e.description().replace(/%target%/, "all foes").replace(/%to target%/, "to all foes")
+        ).join(","); 
+    }
+}
+
+export class he_Attack extends HeroEffect{
+    effects: HeroEffect[];
+    
+    constructor(effects: HeroEffect[]){
+        super();
+        this.effects = effects;
+    }
+
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        let foe = target.getMeleeFoe()
+        if(foe){
+            for(let e of this.effects){
+                await e.apply(user, foe);
+            }
+            return new Promise((resolve)=>resolve());
+        }
+        throw new EffectFailed()
+    }
+
+    description(): string{
+        return this.effects.map(
+            (e) => '<b>Attack: </b>'+e.description().replace(/%to target%/, "")
         ).join(","); 
     }
 }
