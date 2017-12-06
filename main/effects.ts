@@ -78,7 +78,7 @@ export class he_AllFoes extends HeroEffect{
 
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
         let foes: Heros.Hero[] = [];
-        foes = user.getParty().getOpponent().heros;
+        foes = target.getParty().getOpponent().heros;
         for(let f of foes){
             for(let e of this.effects){
                 await e.apply(user, f);
@@ -119,3 +119,31 @@ export class he_Attack extends HeroEffect{
         ).join(","); 
     }
 }
+
+export class he_RangedAttack extends HeroEffect{
+    effects: HeroEffect[];
+    
+    constructor(effects: HeroEffect[]){
+        super();
+        this.effects = effects;
+    }
+
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        let foes = target.getParty().getOpponent().heros;
+        let foe = await target.getParty().makeChoice(foes); 
+        if(foe){
+            for(let e of this.effects){
+                await e.apply(user, foe);
+            }
+            return new Promise((resolve)=>resolve());
+        }
+        throw new EffectFailed()
+    }
+
+    description(): string{
+        return this.effects.map(
+            (e) => '<b>Attack: </b>'+e.description().replace(/%to target%/, "")
+        ).join(","); 
+    }
+}
+

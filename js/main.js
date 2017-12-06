@@ -205,7 +205,7 @@ class he_AllFoes extends HeroEffect {
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
             let foes = [];
-            foes = user.getParty().getOpponent().heros;
+            foes = target.getParty().getOpponent().heros;
             for (let f of foes) {
                 for (let e of this.effects) {
                     yield e.apply(user, f);
@@ -241,6 +241,29 @@ class he_Attack extends HeroEffect {
     }
 }
 exports.he_Attack = he_Attack;
+class he_RangedAttack extends HeroEffect {
+    constructor(effects) {
+        super();
+        this.effects = effects;
+    }
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let foes = target.getParty().getOpponent().heros;
+            let foe = yield target.getParty().makeChoice(foes);
+            if (foe) {
+                for (let e of this.effects) {
+                    yield e.apply(user, foe);
+                }
+                return new Promise((resolve) => resolve());
+            }
+            throw new EffectFailed();
+        });
+    }
+    description() {
+        return this.effects.map((e) => '<b>Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
+    }
+}
+exports.he_RangedAttack = he_RangedAttack;
 
 },{"./heros":4}],3:[function(require,module,exports){
 "use strict";

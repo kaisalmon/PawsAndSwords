@@ -117,7 +117,7 @@ export abstract class Party{
                 ) as Cards.HeroComponent;
 
                 classCard.getElem().addClass('active')
-                let zone: Zone = await this.makeChoice(this.getPlaceableZones()) as Zone;
+                let zone: Zone = await this.makeChoice(this.getPlaceableZones());
                 this.discard(classCard);
                 this.discard(raceCard);
 
@@ -129,7 +129,7 @@ export abstract class Party{
                 choice.getElem().addClass('active');
                 let users = this.heros
                                 .filter((h)=>h.canUseAction(action));
-                let user = await this.makeChoice(users) as Heros.Hero;
+                let user = await this.makeChoice(users);
                 await user.useAction(action)
                 this.discard(action);
             }
@@ -143,19 +143,19 @@ export abstract class Party{
 
         this.onUpdate();
     }
-    abstract async makeChoice(options:Choosable[]): Promise<Choosable>;
+    abstract async makeChoice<T extends Choosable>(options:T[]): Promise<T>;
 }
 export class UIParty extends Party{
-    async makeChoice(options:Choosable[]): Promise<Choosable>{
+    async makeChoice<T extends Choosable>(options:T[]): Promise<T>{
         if(options.length == 0){
             throw new ChoiceFailed();
         }
         for(let c of options){
             c.highlight(); 
         }
-        let p = new Promise<Choosable>((resolve, reject)=>{
+        let p = new Promise<T>((resolve, reject)=>{
             for(let c of options){
-                c.getElem().click(function(c: Choosable){
+                c.getElem().click(function(c: T){
                     resolve(c)
                 }.bind(null, c)); 
             }
@@ -169,11 +169,11 @@ export class UIParty extends Party{
     }
 }
 export class RandomParty extends Party{
-    async makeChoice(options:Choosable[]): Promise<Choosable>{
+    async makeChoice<T extends Choosable>(options:T[]): Promise<T>{
         if(options.length == 0){
             throw new ChoiceFailed();
         }
-        return new Promise<Choosable>((resolve)=>{
+        return new Promise<T>((resolve)=>{
             console.log("Whaaat!?\n",options)
             resolve(options[Math.floor(Math.random()*options.length)])
         })
