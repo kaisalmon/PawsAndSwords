@@ -155,15 +155,13 @@ export class he_RangedAttack extends HeroEffect{
 
 export class he_Move extends HeroEffect{
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
-        return new Promise(async (resolve, reject)=>{
-            try{
-                let zone = await target.getParty().makeChoice(target.getMoveableZones());
-                await target.moveZone(zone);
-                resolve();
-            }catch(e){
-                throw new EffectFailed();
-            }
-        })
+        try{
+            let zone = await target.getParty().makeChoice(target.getMoveableZones());
+            await target.moveZone(zone);
+            return new Promise<{}>(resolve=>resolve());
+        }catch(e){
+            throw new EffectFailed();
+        }
     }
 
     description(): string{

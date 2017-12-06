@@ -94,16 +94,10 @@ class ActionCard extends Card {
     }
     apply(hero) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    for (let e of this.effects) {
-                        yield e.apply(hero, hero);
-                    }
-                }
-                catch (e) {
-                    reject(e);
-                }
-            }));
+            for (let e of this.effects) {
+                yield e.apply(hero, hero);
+            }
+            return new Promise(resolve => resolve());
         });
     }
 }
@@ -279,16 +273,14 @@ exports.he_RangedAttack = he_RangedAttack;
 class he_Move extends HeroEffect {
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    let zone = yield target.getParty().makeChoice(target.getMoveableZones());
-                    yield target.moveZone(zone);
-                    resolve();
-                }
-                catch (e) {
-                    throw new EffectFailed();
-                }
-            }));
+            try {
+                let zone = yield target.getParty().makeChoice(target.getMoveableZones());
+                yield target.moveZone(zone);
+                return new Promise(resolve => resolve());
+            }
+            catch (e) {
+                throw new EffectFailed();
+            }
         });
     }
     description() {
