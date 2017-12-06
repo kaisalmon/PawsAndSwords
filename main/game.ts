@@ -4,9 +4,10 @@ import * as $ from "jquery";
 
 export abstract class Choosable{
     abstract getElem(): JQuery; 
-    highlight() : void{
+    highlight(highlightClass: string) : void{
         this.getElem().addClass('choosable');
         this.getElem().addClass('choosable--highlighted');
+        this.getElem().addClass('choosable--highlighted'+highlightClass);
     }
     unhighlight() : void{
         this.getElem().addClass('choosable');
@@ -18,12 +19,13 @@ export abstract class Choosable{
      constructor() {
         super("Choice Cancelled");
      }
-}*/
+}
 class ChoiceFailed extends Error {
      constructor() {
         super("Choice Failed");
      }
 }
+*/
 
 
 export abstract class Party{
@@ -143,15 +145,15 @@ export abstract class Party{
 
         this.onUpdate();
     }
-    abstract async makeChoice<T extends Choosable>(options:T[]): Promise<T>;
+    abstract async makeChoice<T extends Choosable>(options:T[], highlightClass?:string|undefined): Promise<T>;
 }
 export class UIParty extends Party{
-    async makeChoice<T extends Choosable>(options:T[]): Promise<T>{
+    async makeChoice<T extends Choosable>(options:T[], highlightClass?:string|undefined): Promise<T>{
         if(options.length == 0){
-            throw new ChoiceFailed();
+            return new Promise<T>((resolve, reject) => reject())
         }
         for(let c of options){
-            c.highlight(); 
+            c.highlight(highlightClass||""); 
         }
         let p = new Promise<T>((resolve, reject)=>{
             for(let c of options){
@@ -169,9 +171,9 @@ export class UIParty extends Party{
     }
 }
 export class RandomParty extends Party{
-    async makeChoice<T extends Choosable>(options:T[]): Promise<T>{
+    async makeChoice<T extends Choosable>(options:T[], highlightClass?:string|undefined): Promise<T>{
         if(options.length == 0){
-            throw new ChoiceFailed();
+            return new Promise<T>((resolve, reject) => reject())
         }
         return new Promise<T>((resolve)=>{
             console.log("Whaaat!?\n",options)
@@ -232,6 +234,8 @@ export class Zone extends Choosable{
     }
 
     addHero(player:"a"|"b", hero:Heros.Hero ){
+        hero.zone = this;
+
         if(player == "a"){
             this.heroA = hero;
             this.getElem().find('.zone__A').append(hero.render())

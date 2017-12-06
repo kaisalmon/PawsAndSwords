@@ -28,6 +28,12 @@ export function parseEffects(json: any): Effect[]{
             case "attack":{
                 return new he_Attack(effects as HeroEffect[]);
             }
+            case "ranged_attack":{
+                return new he_RangedAttack(effects as HeroEffect[]);
+            }
+            case "move":{
+                return new he_Move();
+            }
             default:{
                 throw "Unknown effect "+json_e.type;
             }
@@ -130,7 +136,7 @@ export class he_RangedAttack extends HeroEffect{
 
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
         let foes = target.getParty().getOpponent().heros;
-        let foe = await target.getParty().makeChoice(foes); 
+        let foe = await target.getParty().makeChoice(foes, '--red'); 
         if(foe){
             for(let e of this.effects){
                 await e.apply(user, foe);
@@ -142,8 +148,27 @@ export class he_RangedAttack extends HeroEffect{
 
     description(): string{
         return this.effects.map(
-            (e) => '<b>Attack: </b>'+e.description().replace(/%to target%/, "")
+            (e) => '<b>Ranged Attack: </b>'+e.description().replace(/%to target%/, "")
         ).join(","); 
     }
 }
+
+export class he_Move extends HeroEffect{
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        return new Promise(async (resolve, reject)=>{
+            try{
+                let zone = await target.getParty().makeChoice(target.getMoveableZones());
+                await target.moveZone(zone);
+                resolve();
+            }catch(e){
+                throw new EffectFailed();
+            }
+        })
+    }
+
+    description(): string{
+        return "%target% moves zone";
+    }
+}
+
 

@@ -7,6 +7,7 @@ class GameRenderer{
     $handA: JQuery;
     $handB: JQuery;
     $board: JQuery;
+
     constructor(game:Game.Game){
         this.game = game;
         this.$board = $('<div/>').addClass('zones')
@@ -48,9 +49,19 @@ let all_cards_json = [
         {type:"damage", amount:"4"}
     ]},
 
+    {name:"Teleport", type:"spell",icon:"teleport", effects:[
+        {type:"move"}
+    ]},
+
     {name:"Magic Missile", type:"spell",icon:"ringed-beam", effects:[
         {type:"all_foes", effects:[
             {type:"damage", amount:"A + 1"}
+        ]} 
+    ]},
+
+    {name:"Flaming Arrow", type:"spell",icon:"flaming-arrow", effects:[
+        {type:"ranged_attack", effects:[
+            {type:"damage", amount:"A"}
         ]} 
     ]},
 

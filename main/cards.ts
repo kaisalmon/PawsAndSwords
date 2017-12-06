@@ -91,10 +91,15 @@ export class ActionCard extends Card{
     }
 
     async apply(hero: Heros.Hero): Promise<{}>{
-        for(let e of this.effects){
-            await e.apply(hero, hero);
-        }
-        return new Promise((resolve)=>resolve());
+        return new Promise(async (resolve, reject)=>{
+            try{
+                for(let e of this.effects){
+                    await e.apply(hero, hero);
+                }
+            }catch(e){
+                reject(e);
+            }
+        });
     }
 
 }

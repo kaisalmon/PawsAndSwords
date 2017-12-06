@@ -94,10 +94,16 @@ class ActionCard extends Card {
     }
     apply(hero) {
         return __awaiter(this, void 0, void 0, function* () {
-            for (let e of this.effects) {
-                yield e.apply(hero, hero);
-            }
-            return new Promise((resolve) => resolve());
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    for (let e of this.effects) {
+                        yield e.apply(hero, hero);
+                    }
+                }
+                catch (e) {
+                    reject(e);
+                }
+            }));
         });
     }
 }
@@ -158,6 +164,12 @@ function parseEffects(json) {
             }
             case "attack": {
                 return new he_Attack(effects);
+            }
+            case "ranged_attack": {
+                return new he_RangedAttack(effects);
+            }
+            case "move": {
+                return new he_Move();
             }
             default: {
                 throw "Unknown effect " + json_e.type;
@@ -249,7 +261,7 @@ class he_RangedAttack extends HeroEffect {
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
             let foes = target.getParty().getOpponent().heros;
-            let foe = yield target.getParty().makeChoice(foes);
+            let foe = yield target.getParty().makeChoice(foes, '--red');
             if (foe) {
                 for (let e of this.effects) {
                     yield e.apply(user, foe);
@@ -260,10 +272,30 @@ class he_RangedAttack extends HeroEffect {
         });
     }
     description() {
-        return this.effects.map((e) => '<b>Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
+        return this.effects.map((e) => '<b>Ranged Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
     }
 }
 exports.he_RangedAttack = he_RangedAttack;
+class he_Move extends HeroEffect {
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    let zone = yield target.getParty().makeChoice(target.getMoveableZones());
+                    yield target.moveZone(zone);
+                    resolve();
+                }
+                catch (e) {
+                    throw new EffectFailed();
+                }
+            }));
+        });
+    }
+    description() {
+        return "%target% moves zone";
+    }
+}
+exports.he_Move = he_Move;
 
 },{"./heros":4}],3:[function(require,module,exports){
 "use strict";
@@ -280,9 +312,10 @@ const Heros = require("./heros");
 const Cards = require("./cards");
 const $ = require("jquery");
 class Choosable {
-    highlight() {
+    highlight(highlightClass) {
         this.getElem().addClass('choosable');
         this.getElem().addClass('choosable--highlighted');
+        this.getElem().addClass('choosable--highlighted' + highlightClass);
     }
     unhighlight() {
         this.getElem().addClass('choosable');
@@ -294,12 +327,13 @@ exports.Choosable = Choosable;
      constructor() {
         super("Choice Cancelled");
      }
-}*/
-class ChoiceFailed extends Error {
-    constructor() {
-        super("Choice Failed");
-    }
 }
+class ChoiceFailed extends Error {
+     constructor() {
+        super("Choice Failed");
+     }
+}
+*/
 class Party {
     constructor(label, game, deck) {
         this.opponent = null;
@@ -408,13 +442,13 @@ class Party {
 }
 exports.Party = Party;
 class UIParty extends Party {
-    makeChoice(options) {
+    makeChoice(options, highlightClass) {
         return __awaiter(this, void 0, void 0, function* () {
             if (options.length == 0) {
-                throw new ChoiceFailed();
+                return new Promise((resolve, reject) => reject());
             }
             for (let c of options) {
-                c.highlight();
+                c.highlight(highlightClass || "");
             }
             let p = new Promise((resolve, reject) => {
                 for (let c of options) {
@@ -434,10 +468,10 @@ class UIParty extends Party {
 }
 exports.UIParty = UIParty;
 class RandomParty extends Party {
-    makeChoice(options) {
+    makeChoice(options, highlightClass) {
         return __awaiter(this, void 0, void 0, function* () {
             if (options.length == 0) {
-                throw new ChoiceFailed();
+                return new Promise((resolve, reject) => reject());
             }
             return new Promise((resolve) => {
                 console.log("Whaaat!?\n", options);
@@ -488,6 +522,7 @@ class Zone extends Choosable {
         return this.$zone;
     }
     addHero(player, hero) {
+        hero.zone = this;
         if (player == "a") {
             this.heroA = hero;
             this.getElem().find('.zone__A').append(hero.render());
@@ -579,8 +614,18 @@ class Hero extends Game.Choosable {
         }
         throw "Party requested but not defined";
     }
+    getGame() {
+        if (this.party) {
+            return this.party.game;
+        }
+        throw "Party requested but not defined";
+    }
     getMeleeFoe() {
         return this.zone.getHero(this.party.label == 'a' ? 'b' : 'a');
+    }
+    getMoveableZones() {
+        let zones = this.getGame().zones;
+        return zones.filter((z) => (z.heroA || z.heroB) && z != this.zone);
     }
     canUseAction(a) {
         if (this.justJoined || this.usedAction) {
@@ -597,7 +642,46 @@ class Hero extends Game.Choosable {
                 yield sleep(1);
                 this.$hero.removeClass('animated tada');
             }
-            return yield action.apply(this);
+            try {
+                return yield action.apply(this);
+            }
+            catch (e) {
+                console.error(e);
+                return new Promise((r) => r());
+            }
+        });
+    }
+    moveZone(zone) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => {
+                let oldZone = this.zone;
+                let ally = zone.getHero(this.getParty().label);
+                if (this.$hero) {
+                    this.$hero.addClass('animated bounceOut');
+                }
+                if (ally) {
+                    if (ally.$hero) {
+                        ally.$hero.addClass('animated bounceOut');
+                    }
+                }
+                else {
+                    //oldZone.empty(this.getParty().label);
+                }
+                setTimeout(() => {
+                    if (this.$hero) {
+                        this.$hero.removeClass('bounceOut').remove();
+                    }
+                    if (ally) {
+                        console.log(ally);
+                        if (ally.$hero) {
+                            ally.$hero.removeClass('bounceOut').remove();
+                        }
+                        oldZone.addHero(this.getParty().label, ally);
+                    }
+                    zone.addHero(this.getParty().label, this);
+                    resolve();
+                }, 1000);
+            });
         });
     }
     render() {
@@ -695,9 +779,17 @@ let all_cards_json = [
     { name: "Self Wound", type: "spell", icon: "ragged-wound", effects: [
             { type: "damage", amount: "4" }
         ] },
+    { name: "Teleport", type: "spell", icon: "teleport", effects: [
+            { type: "move" }
+        ] },
     { name: "Magic Missile", type: "spell", icon: "ringed-beam", effects: [
             { type: "all_foes", effects: [
                     { type: "damage", amount: "A + 1" }
+                ] }
+        ] },
+    { name: "Flaming Arrow", type: "spell", icon: "flaming-arrow", effects: [
+            { type: "ranged_attack", effects: [
+                    { type: "damage", amount: "A" }
                 ] }
         ] },
     { name: "Smite", type: "spell", icon: "winged-sword", effects: [

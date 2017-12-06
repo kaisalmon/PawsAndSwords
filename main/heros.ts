@@ -58,9 +58,21 @@ export class Hero extends Game.Choosable{
         }
         throw "Party requested but not defined";
     }
+    getGame() : Game.Game{
+        if(this.party){
+            return this.party.game;
+        }
+        throw "Party requested but not defined";
+    }
 
     getMeleeFoe(): Hero|undefined{
         return this.zone.getHero(this.party.label == 'a' ? 'b' : 'a');
+    }
+
+    getMoveableZones(): Game.Zone[]{
+        let zones = this.getGame().zones;
+
+        return zones.filter((z)=> (z.heroA || z.heroB) && z != this.zone )
     }
 
     canUseAction(a: Cards.ActionCard){
@@ -77,7 +89,42 @@ export class Hero extends Game.Choosable{
             await sleep(1);
             this.$hero.removeClass('animated tada');
         }
-        return await action.apply(this);
+        try{
+            return await action.apply(this);
+        }catch(e){
+            console.error(e)
+            return new Promise((r)=>r());
+        }
+    }
+    async moveZone(zone: Game.Zone) : Promise<{}>{
+        return new Promise((resolve)=>{
+            let oldZone = this.zone;
+            let ally = zone.getHero(this.getParty().label)
+            if(this.$hero){
+                this.$hero.addClass('animated bounceOut') 
+            }
+            if(ally){
+                if(ally.$hero){
+                    ally.$hero.addClass('animated bounceOut') 
+                }
+            }else{
+                //oldZone.empty(this.getParty().label);
+            }
+            setTimeout(()=>{
+                if(this.$hero){
+                    this.$hero.removeClass('bounceOut').remove() 
+                }
+                if(ally){
+                    console.log(ally)
+                    if(ally.$hero){
+                        ally.$hero.removeClass('bounceOut').remove() 
+                    }
+                    oldZone.addHero(this.getParty().label, ally);      
+                }
+                zone.addHero(this.getParty().label, this)
+                resolve();
+            },1000)
+        })
     }
 
     render(): JQuery {
