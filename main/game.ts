@@ -1,4 +1,4 @@
-import * as Hero from "./hero";
+import * as Heros from "./heros";
 import * as Cards from "./cards";
 import * as $ from "jquery";
 
@@ -30,20 +30,22 @@ export abstract class Party{
     opponent: Party|null = null;
     deck: Cards.Card[] = [];
     hand: Cards.Card[] = [];
-    heros: Hero.Hero[] = [];
+    heros: Heros.Hero[] = [];
     game: Game;
+    label: 'a'|'b';
 
     playedHero: boolean = false;
 
     onUpdate: ()=>void;
    
-    constructor(game: Game, deck:Cards.Card[]){
+    constructor(label: 'a'|'b', game: Game, deck:Cards.Card[]){
+        this.label = label;
         this.game = game;
         this.deck = deck;
         this.hand = deck.slice();
         this.onUpdate = ()=>{};
     }
-    addHero(hero: Hero.Hero){
+    addHero(hero: Heros.Hero){
         this.playedHero = true;
         this.heros.push(hero);
         hero.party = this;
@@ -74,6 +76,19 @@ export abstract class Party{
         return r;
     }
 
+    getPlaceableZones(): Zone[]{
+        let empty = this.game.zones.filter(z => z.getHero(this.label)==undefined)
+        let opposite_foes = empty.filter(z => z.heroA || z.heroB);
+        if(opposite_foes.length > 0){
+            return opposite_foes;
+        }
+        let adjecent_allies = empty.filter(z => z.adjacent().filter(a=>a.getHero(this.label)).length > 0);
+        if(adjecent_allies.length > 0){
+            return adjecent_allies;
+        }
+        return empty.filter(z => z.center);
+    }
+
     onNewTurn(): void{
         this.playedHero = false;
         for(let h of this.heros){
@@ -102,11 +117,11 @@ export abstract class Party{
                 ) as Cards.HeroComponent;
 
                 classCard.getElem().addClass('active')
-                let zone: Zone = await this.makeChoice(this.game.zones) as Zone;
+                let zone: Zone = await this.makeChoice(this.getPlaceableZones()) as Zone;
                 this.discard(classCard);
                 this.discard(raceCard);
 
-                let h = new Hero.Hero(raceCard, classCard, zone);
+                let h = new Heros.Hero(raceCard, classCard, zone);
                 this.addHero(h);
                 zone.addHero(this.game.activeId, h);
             }else if(choice instanceof Cards.ActionCard){
@@ -114,7 +129,7 @@ export abstract class Party{
                 choice.getElem().addClass('active');
                 let users = this.heros
                                 .filter((h)=>h.canUseAction(action));
-                let user = await this.makeChoice(users) as Hero.Hero;
+                let user = await this.makeChoice(users) as Heros.Hero;
                 await user.useAction(action)
                 this.discard(action);
             }
@@ -171,11 +186,16 @@ export class Game{
     zones: Zone[];
     activeId: 'a'|'b' = 'a';
     constructor(deckA:Cards.Card[], deckB:Cards.Card[]){
-        this.partyA = new UIParty(this, deckA);
-        this.partyB = new RandomParty(this, deckB);
+        this.partyA = new UIParty('a', this, deckA);
+        this.partyB = new RandomParty('b', this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
-        this.zones = [new Zone(),new Zone(),new Zone(true),new Zone(),new Zone()]; //5 zones, with center zone marked
+
+        this.zones = [new Zone(),new Zone(true),new Zone()]; //3 zones, with center zone marked
+        for(let i = 0; i < this.zones.length - 1; i++){ /*0 & 1, not 2. Thus i and (i+1) are valid indexs*/
+            this.zones[i].left = this.zones[i+1];
+            this.zones[i+1].right = this.zones[i];
+        }
     }
     async play(): Promise<{}>{
         const limit = 30;
@@ -191,13 +211,15 @@ export class Game{
 
 export class Zone extends Choosable{
     center: boolean;
-    heroA: Hero.Hero|undefined;
-    heroB: Hero.Hero|undefined;
+    heroA: Heros.Hero|undefined;
+    heroB: Heros.Hero|undefined;
     $zone: JQuery|undefined;
+    left: Zone|undefined;
+    right: Zone|undefined;
     
     constructor(center: boolean = false){
         super();
-        this.center = true;
+        this.center = center;
     }
 
     getElem(): JQuery{
@@ -209,7 +231,7 @@ export class Zone extends Choosable{
         return this.$zone; 
     }
 
-    addHero(player:"a"|"b", hero:Hero.Hero ){
+    addHero(player:"a"|"b", hero:Heros.Hero ){
         if(player == "a"){
             this.heroA = hero;
             this.getElem().find('.zone__A').append(hero.render())
@@ -221,5 +243,24 @@ export class Zone extends Choosable{
         setTimeout(()=>
             hero.getElem().removeClass('bounceIn')
         , 1000);
+    }
+
+    getHero(label: 'a'|'b'): Heros.Hero|undefined{
+        if(label == 'a'){
+            return this.heroA;
+        }else{
+            return this.heroB;
+        }
+    }
+
+    adjacent(): Zone[]{
+        let result: Zone[] = []; 
+        if(this.left){
+            result.push(this.left);
+        }
+        if(this.right){
+            result.push(this.right);
+        }
+        return result;
     }
 }

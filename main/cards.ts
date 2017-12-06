@@ -1,6 +1,6 @@
 import * as $ from 'jquery'
 import * as Effects from "./effects";
-import * as Hero from "./hero";
+import * as Heros from "./heros";
 import * as Game from "./game";
 
 export enum CardType {
@@ -90,7 +90,7 @@ export class ActionCard extends Card{
         return $card;
     }
 
-    async apply(hero: Hero.Hero): Promise<{}>{
+    async apply(hero: Heros.Hero): Promise<{}>{
         for(let e of this.effects){
             await e.apply(hero, hero);
         }

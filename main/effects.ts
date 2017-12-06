@@ -1,15 +1,15 @@
-import * as Hero from "./hero";
+import * as Heros from "./heros";
 
 export abstract class Effect {
     abstract description(): string;
 }
 export abstract class HeroEffect extends Effect {
-    abstract async apply(user:Hero.Hero, target:Hero.Hero): Promise<{}>;
+    abstract async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>;
 }
 
 export function parseEffects(json: any): Effect[]{
     return json.map((json_e: any) => {
-        var amount : Hero.Amount| undefined = json_e.amount ? new Hero.Amount(json_e.amount) : undefined;
+        var amount : Heros.Amount| undefined = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
         var effects : Effect[] | undefined = json_e.effects ? parseEffects(json_e.effects) : undefined;
         switch(json_e.type){
             case "damage":{
@@ -27,14 +27,14 @@ export function parseEffects(json: any): Effect[]{
 }
 
 export class he_Damage extends HeroEffect{
-    amount: Hero.Amount;
+    amount: Heros.Amount;
     
-    constructor(amount: Hero.Amount){
+    constructor(amount: Heros.Amount){
         super();
         this.amount = amount;
     }
 
-    async apply(user:Hero.Hero, target:Hero.Hero): Promise<{}>{
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
         return new Promise((resolve)=>
             {
                 let val = this.amount.val(user);
@@ -67,8 +67,8 @@ export class he_AllFoes extends HeroEffect{
         this.effects = effects;
     }
 
-    async apply(user:Hero.Hero, target:Hero.Hero): Promise<{}>{
-        let foes: Hero.Hero[] = [];
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        let foes: Heros.Hero[] = [];
         foes = user.getParty().getOpponent().heros;
         for(let f of foes){
             for(let e of this.effects){

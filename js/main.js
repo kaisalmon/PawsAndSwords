@@ -132,7 +132,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Hero = require("./hero");
+const Heros = require("./heros");
 class Effect {
 }
 exports.Effect = Effect;
@@ -141,7 +141,7 @@ class HeroEffect extends Effect {
 exports.HeroEffect = HeroEffect;
 function parseEffects(json) {
     return json.map((json_e) => {
-        var amount = json_e.amount ? new Hero.Amount(json_e.amount) : undefined;
+        var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
         var effects = json_e.effects ? parseEffects(json_e.effects) : undefined;
         switch (json_e.type) {
             case "damage": {
@@ -212,7 +212,7 @@ class he_AllFoes extends HeroEffect {
 }
 exports.he_AllFoes = he_AllFoes;
 
-},{"./hero":4}],3:[function(require,module,exports){
+},{"./heros":4}],3:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -223,7 +223,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Hero = require("./hero");
+const Heros = require("./heros");
 const Cards = require("./cards");
 const $ = require("jquery");
 class Choosable {
@@ -248,12 +248,13 @@ class ChoiceFailed extends Error {
     }
 }
 class Party {
-    constructor(game, deck) {
+    constructor(label, game, deck) {
         this.opponent = null;
         this.deck = [];
         this.hand = [];
         this.heros = [];
         this.playedHero = false;
+        this.label = label;
         this.game = game;
         this.deck = deck;
         this.hand = deck.slice();
@@ -288,6 +289,18 @@ class Party {
         }
         return r;
     }
+    getPlaceableZones() {
+        let empty = this.game.zones.filter(z => z.getHero(this.label) == undefined);
+        let opposite_foes = empty.filter(z => z.heroA || z.heroB);
+        if (opposite_foes.length > 0) {
+            return opposite_foes;
+        }
+        let adjecent_allies = empty.filter(z => z.adjacent().filter(a => a.getHero(this.label)).length > 0);
+        if (adjecent_allies.length > 0) {
+            return adjecent_allies;
+        }
+        return empty.filter(z => z.center);
+    }
     onNewTurn() {
         this.playedHero = false;
         for (let h of this.heros) {
@@ -313,10 +326,10 @@ class Party {
                     raceCard.getElem().addClass('active');
                     let classCard = yield this.makeChoice(this.hand.filter((c) => c.type == Cards.CardType.CLASS));
                     classCard.getElem().addClass('active');
-                    let zone = yield this.makeChoice(this.game.zones);
+                    let zone = yield this.makeChoice(this.getPlaceableZones());
                     this.discard(classCard);
                     this.discard(raceCard);
-                    let h = new Hero.Hero(raceCard, classCard, zone);
+                    let h = new Heros.Hero(raceCard, classCard, zone);
                     this.addHero(h);
                     zone.addHero(this.game.activeId, h);
                 }
@@ -384,11 +397,15 @@ exports.RandomParty = RandomParty;
 class Game {
     constructor(deckA, deckB) {
         this.activeId = 'a';
-        this.partyA = new UIParty(this, deckA);
-        this.partyB = new RandomParty(this, deckB);
+        this.partyA = new UIParty('a', this, deckA);
+        this.partyB = new RandomParty('b', this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
-        this.zones = [new Zone(), new Zone(), new Zone(true), new Zone(), new Zone()]; //5 zones, with center zone marked
+        this.zones = [new Zone(), new Zone(true), new Zone()]; //3 zones, with center zone marked
+        for (let i = 0; i < this.zones.length - 1; i++) {
+            this.zones[i].left = this.zones[i + 1];
+            this.zones[i + 1].right = this.zones[i];
+        }
     }
     play() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -407,7 +424,7 @@ exports.Game = Game;
 class Zone extends Choosable {
     constructor(center = false) {
         super();
-        this.center = true;
+        this.center = center;
     }
     getElem() {
         if (!this.$zone) {
@@ -429,10 +446,28 @@ class Zone extends Choosable {
         hero.getElem().addClass('animated bounceIn');
         setTimeout(() => hero.getElem().removeClass('bounceIn'), 1000);
     }
+    getHero(label) {
+        if (label == 'a') {
+            return this.heroA;
+        }
+        else {
+            return this.heroB;
+        }
+    }
+    adjacent() {
+        let result = [];
+        if (this.left) {
+            result.push(this.left);
+        }
+        if (this.right) {
+            result.push(this.right);
+        }
+        return result;
+    }
 }
 exports.Zone = Zone;
 
-},{"./cards":1,"./hero":4,"jquery":6}],4:[function(require,module,exports){
+},{"./cards":1,"./heros":4,"jquery":6}],4:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
