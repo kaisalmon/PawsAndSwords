@@ -725,17 +725,17 @@ class Hero extends Game.Choosable {
                     this.$hero.removeClass('animated flash');
                 }
                 for (let ov of on_events) {
-                    for (let e of ov.effects) {
-                        try {
+                    try {
+                        for (let e of ov.effects) {
                             yield e.apply(this, this);
                         }
-                        catch (e) {
-                            if (e instanceof Effects.EffectFailed) {
-                                //pass
-                            }
-                            else {
-                                throw e;
-                            }
+                    }
+                    catch (e) {
+                        if (e instanceof Effects.EffectFailed) {
+                            //pass
+                        }
+                        else {
+                            throw e;
                         }
                     }
                 }
