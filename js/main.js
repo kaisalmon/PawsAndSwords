@@ -1027,7 +1027,8 @@ class Hero extends Game.Choosable {
         this.tempPassives.push(tempPassive);
     }
     render() {
-        this.$hero = $('<div/>').addClass('hero');
+        this.$hero = $('<div/>').addClass('wrapper--hero');
+        $('<div/>').addClass('hero').appendTo(this.$hero);
         this.rerender();
         return this.$hero;
     }
@@ -1035,9 +1036,10 @@ class Hero extends Game.Choosable {
         if (!this.$hero) {
             throw "Hero not rendered";
         }
-        this.$hero.empty();
-        $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo(this.$hero);
-        let $row = $('<div/>').addClass('hero__stats').appendTo(this.$hero);
+        var $inner = this.$hero.find('.hero');
+        $inner.empty();
+        $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo($inner);
+        let $row = $('<div/>').addClass('hero__stats').appendTo($inner);
         $('<div/>').addClass('hero__strength').appendTo($row).text(this.getStrength());
         $('<div/>').addClass('hero__arcana').appendTo($row).text(this.getArcana());
         let damaged = this.getHealth() < this.getMaxHealth();
@@ -1046,9 +1048,9 @@ class Hero extends Game.Choosable {
             $('<div/>').addClass('hero__armored').appendTo($row);
         }
         let opacity = this.hasKeyword(Effects.Keyword.INVISIBLE) ? 0.7 : 1;
-        this.$hero.css('opacity', opacity);
+        $inner.css('opacity', opacity);
         let transform = this.hasKeyword(Effects.Keyword.STAGGERED) ? "rotate(15deg)" : "none";
-        this.$hero.css('transform', transform);
+        $inner.css('transform', transform);
     }
     getElem() {
         if (this.$hero) {

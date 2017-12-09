@@ -46,6 +46,8 @@
   vertical-align: text-bottom;
   width: 200px;
     
+  transform: opacity 0.5s, transform 0.5s;
+
   & + &{
     margin-right: 15px;
   }
