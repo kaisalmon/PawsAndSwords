@@ -30,7 +30,6 @@ export class EffectFailed extends Error {
 export function parseEffects(json: any): Effect[]{
     return json.map((json_e: any) => {
         var amount : Heros.Amount| undefined = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
-        var value : number| undefined = json_e.value;
         var effects : Effect[] | undefined = json_e.effects ? parseEffects(json_e.effects) : undefined;
         switch(json_e.type){
             //Hero Effects
@@ -64,12 +63,6 @@ export function parseEffects(json: any): Effect[]{
             }
 
             //Hero Passives
-            case "strength":{
-                return new hp_Strength(value||1);
-            }
-            case "action":{
-                return new hp_Action(effects as HeroEffect[]);
-            }
             case "on_new_turn":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_NEW_TURN ,"At the start of each turn");
             }
@@ -315,19 +308,6 @@ export class he_UntilEvent extends HeroEffect{
     }
     description(): string{
         return '%target% has '+ this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
-    }
-}
-
-
-
-class hp_Strength extends HeroPassive{
-    value: number;
-    constructor(value: number){
-        super();
-        this.value = value; 
-    }
-    description(): string{
-        return "%target% has +"+this.value+" <b>Strength</b>";
     }
 }
 

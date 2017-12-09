@@ -122,7 +122,7 @@ export class HeroComponent extends Card{
         var descriptions: string[] = this.effects.map(
             (e) => e.description()
         );
-        var description = descriptions.join(", ").replace(/%to target%/g,"to this hero").replace(/%target%/g,"this hero");
+        var description = descriptions.join(", ").replace(/%to target%/g,"to this hero").replace(/%target%/g,"the "+this.name);
         description = description.charAt(0).toUpperCase() + description.slice(1);
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;

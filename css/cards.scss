@@ -43,8 +43,8 @@
   display: inline-block;
   position: relative;
   background-color: white;
-
-
+  vertical-align: text-bottom;
+  width: 200px;
     
   & + &{
     margin-right: 15px;

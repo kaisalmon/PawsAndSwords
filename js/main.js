@@ -118,7 +118,7 @@ class HeroComponent extends Card {
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana);
         $('<div/>').addClass('card__health').appendTo($row).text(this.health);
         var descriptions = this.effects.map((e) => e.description());
-        var description = descriptions.join(", ").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
+        var description = descriptions.join(", ").replace(/%to target%/g, "to this hero").replace(/%target%/g, "the " + this.name);
         description = description.charAt(0).toUpperCase() + description.slice(1);
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
@@ -166,7 +166,6 @@ exports.EffectFailed = EffectFailed;
 function parseEffects(json) {
     return json.map((json_e) => {
         var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
-        var value = json_e.value;
         var effects = json_e.effects ? parseEffects(json_e.effects) : undefined;
         switch (json_e.type) {
             //Hero Effects
@@ -199,12 +198,6 @@ function parseEffects(json) {
                 return new he_UntilEvent(effects, Game.GameEvent.ON_ATTACKS, "until after their next attack");
             }
             //Hero Passives
-            case "strength": {
-                return new hp_Strength(value || 1);
-            }
-            case "action": {
-                return new hp_Action(effects);
-            }
             case "on_new_turn": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_NEW_TURN, "At the start of each turn");
             }
@@ -437,15 +430,6 @@ class he_UntilEvent extends HeroEffect {
     }
 }
 exports.he_UntilEvent = he_UntilEvent;
-class hp_Strength extends HeroPassive {
-    constructor(value) {
-        super();
-        this.value = value;
-    }
-    description() {
-        return "%target% has +" + this.value + " <b>Strength</b>";
-    }
-}
 class hp_Action extends HeroPassive {
     constructor(effects) {
         super();
@@ -1158,8 +1142,12 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Self Wound", type: "spell", icon: "ragged-wound", effects: [
-            { type: "damage", amount: "4" }
+    { name: "Hermit Crab", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+            { type: "on_new_turn", effects: [
+                    { type: "until_attacks", effects: [
+                            { type: "armored" },
+                        ] }
+                ] }
         ] },
     { name: "Teleport", type: "spell", icon: "teleport", effects: [
             { type: "move" }

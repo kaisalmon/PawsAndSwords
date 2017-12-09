@@ -82,9 +82,14 @@ let all_cards_json = [
         ]} 
     ]},
 
-    {name:"Self Wound", type:"spell",icon:"ragged-wound", effects:[
-        {type:"damage", amount:"4"}
+    {name:"Hermit Crab", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
+        {type:"on_new_turn", effects:[
+            {type:"until_attacks", effects:[
+                {type:"armored"}, 
+            ]} 
+        ]} 
     ]},
+
 
     {name:"Teleport", type:"spell",icon:"teleport", effects:[
         {type:"move"}
@@ -107,6 +112,7 @@ let all_cards_json = [
             {type:"damage", amount:"A + S"}
         ]} 
     ]},
+
     {name:"Smite", type:"spell",icon:"winged-sword", effects:[
         {type:"attack", effects:[
             {type:"damage", amount:"A + S"}
