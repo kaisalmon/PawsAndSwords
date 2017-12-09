@@ -14,6 +14,12 @@
                  -2px -2px black;
 }
 
+.wrapper{
+    &--hero{
+        display: inline-block;
+    }
+}
+
 
 .choosable{
     transition: filter 0.5s;

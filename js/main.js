@@ -98,6 +98,7 @@ class ActionCard extends Card {
         return __awaiter(this, void 0, void 0, function* () {
             for (let e of this.effects) {
                 yield e.apply(hero, hero);
+                hero.getParty().onUpdate();
             }
             return new Promise(resolve => resolve());
         });
@@ -1105,6 +1106,10 @@ class GameRenderer {
         this.$handB = $('<div/>').css('position', 'fixed')
             .css('top', '0')
             .appendTo('body');
+        this.$board.empty();
+        for (let z of this.game.zones) {
+            z.getElem().appendTo(this.$board);
+        }
         this.onUpdate();
     }
     onUpdate() {
@@ -1124,10 +1129,6 @@ class GameRenderer {
         this.$handB.empty();
         for (let c of this.game.partyB.hand) {
             c.render().appendTo(this.$handB);
-        }
-        this.$board.empty();
-        for (let z of this.game.zones) {
-            z.getElem().appendTo(this.$board);
         }
     }
 }
@@ -1157,10 +1158,10 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+    { name: "Bear", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_join", effects: [
-                    { type: "attack", effects: [
-                            { type: "damage", amount: "2" }
+                    { type: "until_attacked", effects: [
+                            { type: "staggered" }
                         ] }
                 ] }
         ] },

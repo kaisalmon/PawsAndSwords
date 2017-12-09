@@ -19,6 +19,11 @@ class GameRenderer{
                                  .css('top', '0')
                                  .appendTo('body');
 
+        this.$board.empty(); 
+        for(let z of this.game.zones){
+            z.getElem().appendTo(this.$board);
+        }
+
         this.onUpdate();
     }
     onUpdate():void{
@@ -37,10 +42,6 @@ class GameRenderer{
         this.$handB.empty();
         for(let c of this.game.partyB.hand){
             c.render().appendTo(this.$handB);
-        }
-        this.$board.empty(); 
-        for(let z of this.game.zones){
-            z.getElem().appendTo(this.$board);
         }
     } 
 }

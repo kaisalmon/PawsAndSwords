@@ -96,6 +96,7 @@ export class ActionCard extends Card{
     async apply(hero: Heros.Hero): Promise<{}>{
         for(let e of this.effects){
             await e.apply(hero, hero);
+            hero.getParty().onUpdate();
         }
         return new Promise<{}>(resolve=>resolve())
     }
