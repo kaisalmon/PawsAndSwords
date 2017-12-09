@@ -53,15 +53,16 @@ let all_cards_json = [
     ]},
 
     {name:"Wizard", type:"class","role":"mage", icon:"pointy-hat", strength:0, arcana:2, health:8, effects:[
-        {type:"all_allies_have", effects:[
+        {type:"while_alone", effects:[
             {type:"invisible"}, 
         ]} 
     ]}, 
 
     {name:"Squirrel", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
-        {type:"on_attacked", effects:[
-            {type:"move_random"}, 
-            {type:"damage", amount:"1"}
+        {type:"while_damaged", effects:[
+            {type:"on_attacked", effects:[
+                {type:"move_random"}, 
+            ]} 
         ]} 
     ]},
     {name:"Boar", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[

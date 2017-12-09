@@ -115,7 +115,12 @@ export class Hero extends Game.Choosable{
                 effects = effects.concat(source.effects);
             }
         }
-        return effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+
+        effects =  effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+        let activePassives: Effects.HeroPassive[][] = effects.map((e)=>e.getActivePassives(this));
+
+        effects = activePassives.reduce((arr, e)=>arr.concat(e), []);
+        return effects;
     }
 
     getPassivesOfType<T extends Effects.HeroPassive>(t: new (...args: any[]) => T, depth=0, maxDepth=10): T[] {

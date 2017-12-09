@@ -151,6 +151,10 @@ class HeroEffect extends Effect {
 }
 exports.HeroEffect = HeroEffect;
 class HeroPassive extends Effect {
+    //this is used to allow conditional passives to expose their children instead of themselves
+    getActivePassives(h) {
+        return [this];
+    }
 }
 exports.HeroPassive = HeroPassive;
 class EffectFailed extends Error {
@@ -212,6 +216,12 @@ function parseEffects(json) {
             }
             case "invisible": {
                 return new hp_Keyword(Keyword.INVISIBLE);
+            }
+            case "while_damaged": {
+                return new hp_WhileCond(effects, (h) => h.damage > 0, "while damaged");
+            }
+            case "while_alone": {
+                return new hp_WhileCond(effects, (h) => h.getParty().heros.length == 1, "while alone");
             }
             default: {
                 throw "Unknown effect " + json_e.type;
@@ -447,6 +457,34 @@ class hp_Keyword extends HeroPassive {
     }
 }
 exports.hp_Keyword = hp_Keyword;
+class hp_WhileCond extends HeroPassive {
+    constructor(effects, cond, text) {
+        super();
+        this.effects = effects;
+        this.cond = cond;
+        this.description_text = text;
+    }
+    getActivePassives(h) {
+        if (this.cond(h)) {
+            return this.effects;
+        }
+        else {
+            return [];
+        }
+    }
+    description() {
+        let first_effect = this.effects[0];
+        //Improved grammar for when the only effect is an onEvent 
+        if (this.effects.length == 1 && first_effect instanceof hp_OnEvent) {
+            var grandchildren_effects = first_effect.effects;
+            return first_effect.description_text + ' ' + this.description_text + ' ' + grandchildren_effects.map((e) => e.description()).join(", ");
+        }
+        else {
+            return this.effects.map((e) => e.description()).join(", ") + " " + this.description_text;
+        }
+    }
+}
+exports.hp_WhileCond = hp_WhileCond;
 
 },{"./game":3,"./heros":4}],3:[function(require,module,exports){
 "use strict";
@@ -855,7 +893,10 @@ class Hero extends Game.Choosable {
                 effects = effects.concat(source.effects);
             }
         }
-        return effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+        effects = effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+        let activePassives = effects.map((e) => e.getActivePassives(this));
+        effects = activePassives.reduce((arr, e) => arr.concat(e), []);
+        return effects;
     }
     getPassivesOfType(t, depth = 0, maxDepth = 10) {
         //There is a limit of how much we need to account for an ability that says
@@ -1039,14 +1080,15 @@ let all_cards_json = [
                 ] }
         ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
-            { type: "all_allies_have", effects: [
+            { type: "while_alone", effects: [
                     { type: "invisible" },
                 ] }
         ] },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
-            { type: "on_attacked", effects: [
-                    { type: "move_random" },
-                    { type: "damage", amount: "1" }
+            { type: "while_damaged", effects: [
+                    { type: "on_attacked", effects: [
+                            { type: "move_random" },
+                        ] }
                 ] }
         ] },
     { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [

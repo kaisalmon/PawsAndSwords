@@ -14,7 +14,12 @@ export abstract class HeroEffect extends Effect {
     abstract isValid(user:Heros.Hero, target:Heros.Hero): boolean;
 }
 
-export abstract class HeroPassive extends Effect {}
+export abstract class HeroPassive extends Effect {
+    //this is used to allow conditional passives to expose their children instead of themselves
+    getActivePassives(h: Heros.Hero): HeroPassive[]{
+        return [this];
+    } 
+}
 
 export class EffectFailed extends Error {
      constructor() {
@@ -75,6 +80,12 @@ export function parseEffects(json: any): Effect[]{
             }
             case "invisible":{
                 return new hp_Keyword(Keyword.INVISIBLE);
+            }
+            case "while_damaged":{
+                return new hp_WhileCond(effects as HeroPassive[], (h)=>h.damage > 0, "while damaged");
+            }
+            case "while_alone":{
+                return new hp_WhileCond(effects as HeroPassive[], (h)=>h.getParty().heros.length == 1, "while alone");
             }
             default:{
                 throw "Unknown effect "+json_e.type;
@@ -337,5 +348,36 @@ export class hp_Keyword extends HeroPassive{
 
     description(): string{
         return "<b>"+this.keyword.toString().toLowerCase()+"</b>";
+    }
+}
+export class hp_WhileCond extends HeroPassive{
+    effects: HeroPassive[];
+    cond: (h: Heros.Hero)=>boolean;
+    description_text: string;
+
+    constructor(effects: HeroPassive[], cond: (h: Heros.Hero)=>boolean, text: string){
+        super();
+        this.effects = effects;
+        this.cond = cond;
+        this.description_text = text;
+    }
+    
+    getActivePassives(h: Heros.Hero): HeroPassive[]{
+        if(this.cond(h)){
+            return this.effects;
+        }else{
+            return [];
+        }
+    }
+    
+    description(): string{
+        let first_effect = this.effects[0];
+        //Improved grammar for when the only effect is an onEvent 
+        if(this.effects.length == 1 && first_effect instanceof hp_OnEvent){
+             var grandchildren_effects = first_effect.effects;
+             return first_effect.description_text +' '+this.description_text+' '+ grandchildren_effects.map((e)=>e.description()).join(", "); 
+        }else{
+            return this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
+        }
     }
 }
