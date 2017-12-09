@@ -1,6 +1,10 @@
 import * as Heros from "./heros";
 import * as Game from "./game";
 
+export enum Keyword{
+    ARMORED="Armored"
+}
+
 export abstract class Effect {
     abstract description(): string;
 }
@@ -62,6 +66,12 @@ export function parseEffects(json: any): Effect[]{
             case "on_join":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_JOIN ,"When %target% enters the arena");
             }
+            case "all_allies_have":{
+                return new hp_AllAlliesHave(effects as HeroPassive[]);
+            }
+            case "armored":{
+                return new hp_Keyword(Keyword.ARMORED);
+            }
             default:{
                 throw "Unknown effect "+json_e.type;
             }
@@ -81,16 +91,23 @@ export class he_Damage extends HeroEffect{
         return new Promise((resolve)=>
             {
                 let val = this.amount.val(user);
-                target.damage += val;
-                if(target.$hero){
-                    target.$hero.addClass('animated shake')
-                    target.rerender();
-                    setTimeout(()=>{
-                        if(target.$hero){
-                            target.$hero.removeClass('shake');
-                        }
-                        resolve();
-                    },1000)
+                if(target.hasKeyword(Keyword.ARMORED)){
+                    val-=1;
+                }
+                if(val > 0){
+                    target.damage += val;
+                    if(target.$hero){
+                        target.$hero.addClass('animated shake')
+                        target.rerender();
+                        setTimeout(()=>{
+                            if(target.$hero){
+                                target.$hero.removeClass('shake');
+                            }
+                            resolve();
+                        },1000)
+                    }else{
+                        resolve();     
+                    }
                 }else{
                     resolve();     
                 }
@@ -286,5 +303,33 @@ export class hp_OnEvent extends HeroPassive{
     }
     description(): string{
         return this.description_text +' '+ this.effects.map((e)=>e.description()).join(", "); 
+    }
+}
+
+export class hp_AllAlliesHave extends HeroPassive{
+    effects: HeroPassive[];
+    
+    constructor(effects: HeroPassive[]){
+        super();
+        this.effects = effects;
+    }
+
+    description(): string{
+        return "All allies have <i>\""+this.effects.map(
+            (e) => e.description().replace(/%to target%/, "")
+        ).join(",")+"\"</i>"; 
+    }
+}
+
+
+export class hp_Keyword extends HeroPassive{
+    keyword: Keyword;
+    constructor(keyword: Keyword){
+        super();
+        this.keyword = keyword;
+    }
+
+    description(): string{
+        return "<b>"+this.keyword.toString().toLowerCase()+"</b>";
     }
 }

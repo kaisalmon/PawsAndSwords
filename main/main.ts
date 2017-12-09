@@ -22,6 +22,14 @@ class GameRenderer{
         this.onUpdate();
     }
     onUpdate():void{
+        try{
+            for(let h of this.game.partyA.heros){
+                h.rerender();
+            }
+            for(let h of this.game.partyB.heros){
+                h.rerender();
+            }
+        }catch(e){}
         this.$handA.empty();
         for(let c of this.game.partyA.hand){
             c.render().appendTo(this.$handA);
@@ -44,7 +52,11 @@ let all_cards_json = [
         ]} 
     ]},
 
-    {name:"Wizard", type:"class","role":"mage", icon:"pointy-hat", strength:0, arcana:2, health:8},
+    {name:"Wizard", type:"class","role":"mage", icon:"pointy-hat", strength:0, arcana:2, health:8, effects:[
+        {type:"all_allies_have", effects:[
+            {type:"armored"}, 
+        ]} 
+    ]}, 
 
     {name:"Squirrel", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
         {type:"on_attacked", effects:[

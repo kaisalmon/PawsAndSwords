@@ -139,6 +139,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Heros = require("./heros");
 const Game = require("./game");
+var Keyword;
+(function (Keyword) {
+    Keyword["ARMORED"] = "Armored";
+})(Keyword = exports.Keyword || (exports.Keyword = {}));
 class Effect {
 }
 exports.Effect = Effect;
@@ -199,6 +203,12 @@ function parseEffects(json) {
             case "on_join": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_JOIN, "When %target% enters the arena");
             }
+            case "all_allies_have": {
+                return new hp_AllAlliesHave(effects);
+            }
+            case "armored": {
+                return new hp_Keyword(Keyword.ARMORED);
+            }
             default: {
                 throw "Unknown effect " + json_e.type;
             }
@@ -215,16 +225,24 @@ class he_Damage extends HeroEffect {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve) => {
                 let val = this.amount.val(user);
-                target.damage += val;
-                if (target.$hero) {
-                    target.$hero.addClass('animated shake');
-                    target.rerender();
-                    setTimeout(() => {
-                        if (target.$hero) {
-                            target.$hero.removeClass('shake');
-                        }
+                if (target.hasKeyword(Keyword.ARMORED)) {
+                    val -= 1;
+                }
+                if (val > 0) {
+                    target.damage += val;
+                    if (target.$hero) {
+                        target.$hero.addClass('animated shake');
+                        target.rerender();
+                        setTimeout(() => {
+                            if (target.$hero) {
+                                target.$hero.removeClass('shake');
+                            }
+                            resolve();
+                        }, 1000);
+                    }
+                    else {
                         resolve();
-                    }, 1000);
+                    }
                 }
                 else {
                     resolve();
@@ -251,7 +269,9 @@ class he_AllFoes extends HeroEffect {
             foes = target.getParty().getOpponent().heros;
             for (let f of foes) {
                 for (let e of this.effects) {
+                    alert("doing");
                     yield e.apply(user, f);
+                    alert("done");
                 }
             }
             return new Promise((resolve) => resolve());
@@ -403,6 +423,26 @@ class hp_OnEvent extends HeroPassive {
     }
 }
 exports.hp_OnEvent = hp_OnEvent;
+class hp_AllAlliesHave extends HeroPassive {
+    constructor(effects) {
+        super();
+        this.effects = effects;
+    }
+    description() {
+        return "All allies have <i>\"" + this.effects.map((e) => e.description().replace(/%to target%/, "")).join(",") + "\"</i>";
+    }
+}
+exports.hp_AllAlliesHave = hp_AllAlliesHave;
+class hp_Keyword extends HeroPassive {
+    constructor(keyword) {
+        super();
+        this.keyword = keyword;
+    }
+    description() {
+        return "<b>" + this.keyword.toString().toLowerCase() + "</b>";
+    }
+}
+exports.hp_Keyword = hp_Keyword;
 
 },{"./game":3,"./heros":4}],3:[function(require,module,exports){
 "use strict";
@@ -547,6 +587,7 @@ class Party {
                     yield user.useAction(action);
                     this.discard(action);
                 }
+                this.onUpdate();
             }
             console.log("Ending turn");
             return new Promise((resolve) => resolve());
@@ -753,6 +794,10 @@ class Hero extends Game.Choosable {
             return new Promise((resolve) => resolve());
         });
     }
+    hasKeyword(keyword) {
+        let keywords = this.getPassivesOfType(Effects.hp_Keyword).filter((hp) => hp.keyword == keyword);
+        return keywords.length > 0;
+    }
     onNewTurn() {
         return __awaiter(this, void 0, void 0, function* () {
             this.usedAction = false;
@@ -798,17 +843,31 @@ class Hero extends Game.Choosable {
         let zones = this.getGame().zones;
         return zones.filter((z) => (z.heroA || z.heroB) && z != this.zone);
     }
-    getPassives() {
+    getPassives(depth = 0, maxDepth = 10) {
         var effects = [];
+        for (let ally of this.getAllies()) {
+            let allAllyEffects = ally.getPassivesOfType(Effects.hp_AllAlliesHave, depth + 1, maxDepth);
+            for (let source of allAllyEffects) {
+                effects = effects.concat(source.effects);
+            }
+        }
         return effects.concat(this.raceCard.effects).concat(this.classCard.effects);
     }
-    getPassivesOfType(t) {
+    getPassivesOfType(t, depth = 0, maxDepth = 10) {
+        //There is a limit of how much we need to account for an ability that says
+        // "All allies have "All allies have "all allies have "All allies have "all Foes have "...
+        if (depth >= maxDepth) {
+            return [];
+        }
         let result = [];
-        for (let child of this.getPassives()) {
+        for (let child of this.getPassives(depth + 1, maxDepth)) {
             if (child instanceof t)
                 result.push(child);
         }
         return result;
+    }
+    getAllies() {
+        return this.getParty().heros.filter((h) => h !== this);
     }
     canUseAction(a) {
         if (this.justJoined || this.usedAction) {
@@ -884,6 +943,9 @@ class Hero extends Game.Choosable {
         $('<div/>').addClass('hero__arcana').appendTo($row).text(this.getArcana());
         let damaged = this.getHealth() < this.getMaxHealth();
         $('<div/>').addClass('hero__health').appendTo($row).text(this.getHealth()).addClass(damaged ? "hero__health--damaged" : "");
+        if (this.hasKeyword(Effects.Keyword.ARMORED)) {
+            $('<div/>').addClass('hero__armored').appendTo($row);
+        }
     }
     getElem() {
         if (this.$hero) {
@@ -941,6 +1003,15 @@ class GameRenderer {
         this.onUpdate();
     }
     onUpdate() {
+        try {
+            for (let h of this.game.partyA.heros) {
+                h.rerender();
+            }
+            for (let h of this.game.partyB.heros) {
+                h.rerender();
+            }
+        }
+        catch (e) { }
         this.$handA.empty();
         for (let c of this.game.partyA.hand) {
             c.render().appendTo(this.$handA);
@@ -961,7 +1032,11 @@ let all_cards_json = [
                     { type: "move_random" }
                 ] }
         ] },
-    { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8 },
+    { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
+            { type: "all_allies_have", effects: [
+                    { type: "armored" },
+                ] }
+        ] },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_attacked", effects: [
                     { type: "move_random" },

@@ -145,6 +145,7 @@ export abstract class Party{
                 await user.useAction(action)
                 this.discard(action);
             }
+            this.onUpdate();
         }
         console.log("Ending turn");
         return new Promise((resolve)=>resolve()) 

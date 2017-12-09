@@ -107,10 +107,10 @@ export class Hero extends Game.Choosable{
         return zones.filter((z)=> (z.heroA || z.heroB) && z != this.zone )
     }
     
-    getPassives(depth=0, maxDepth=10): Effects.HeroPassive[]{
+    getPassives(): Effects.HeroPassive[]{
         var effects: Effects.HeroPassive[] = [];
         for(let ally of this.getAllies()){
-            let allAllyEffects = ally.getPassivesOfType(Effects.hp_AllAlliesHave, depth+1, maxDepth);
+            let allAllyEffects = effects.concat(ally.getPassivesOfType(Effects.hp_AllAlliesHave));
             for(let source of allAllyEffects){
                 effects = effects.concat(source.effects);
             }
@@ -118,14 +118,9 @@ export class Hero extends Game.Choosable{
         return effects.concat(this.raceCard.effects).concat(this.classCard.effects);
     }
 
-    getPassivesOfType<T extends Effects.HeroPassive>(t: new (...args: any[]) => T, depth=0, maxDepth=10): T[] {
-        //There is a limit of how much we need to account for an ability that says
-        // "All allies have "All allies have "all allies have "All allies have "all Foes have "...
-        if(depth >= maxDepth){
-            return []; 
-        }
+    getPassivesOfType<T extends Effects.HeroPassive>(t: new (...args: any[]) => T): T[] {
         let result: T[] = [];
-        for (let child of this.getPassives(depth+1, maxDepth)) {
+        for (let child of this.getPassives()) {
             if (child instanceof t)
                 result.push(<T>child);
             }
