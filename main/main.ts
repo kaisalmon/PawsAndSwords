@@ -74,10 +74,10 @@ let all_cards_json = [
             ]} 
         ]} 
     ]},
-    {name:"Boar", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
+    {name:"Bear", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
         {type:"on_join", effects:[
-            {type:"attack", effects:[
-                {type:"damage", amount:"2"}
+            {type:"until_attacked", effects:[
+                {type:"staggered"}
             ]} 
         ]} 
     ]},
