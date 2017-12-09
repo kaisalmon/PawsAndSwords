@@ -40,7 +40,15 @@ export class Hero extends Game.Choosable{
             }
             for(let ov of on_events){
                 for(let e of ov.effects){
-                    await e.apply(this, this);
+                    try{
+                        await e.apply(this, this);
+                    }catch(e){
+                        if(e instanceof Effects.EffectFailed){
+                            //pass
+                        }else{
+                            throw e;
+                        }
+                    }
                 }
             }
         }
@@ -142,7 +150,7 @@ export class Hero extends Game.Choosable{
             }else{
                 oldZone.empty(this.getParty().label);
             }
-            setTimeout(()=>{
+            setTimeout(async ()=>{
                 if(this.$hero){
                     this.$hero.removeClass('bounceOut').remove() 
                 }
@@ -151,9 +159,10 @@ export class Hero extends Game.Choosable{
                     if(ally.$hero){
                         ally.$hero.removeClass('bounceOut').remove() 
                     }
+                    //do not await, so animations play at the same time
                     oldZone.addHero(this.getParty().label, ally);      
                 }
-                zone.addHero(this.getParty().label, this)
+                await zone.addHero(this.getParty().label, this)
                 resolve();
             },1000)
         })

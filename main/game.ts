@@ -132,7 +132,7 @@ export abstract class Party{
 
                 let h = new Heros.Hero(raceCard, classCard, zone);
                 this.addHero(h);
-                zone.addHero(this.game.activeId, h);
+                await zone.addHero(this.game.activeId, h);
             }else if(choice instanceof Cards.ActionCard){
                 let action = choice;
                 choice.getElem().addClass('active');
@@ -179,13 +179,7 @@ export class UIParty extends Party{
 }
 export class RandomParty extends Party{
     async makeChoice<T extends Choosable>(options:T[], highlightClass?:string|undefined): Promise<T>{
-        if(options.length == 0){
-            return new Promise<T>((resolve, reject) => reject())
-        }
-        return new Promise<T>((resolve)=>{
-            console.log("Whaaat!?\n",options)
-            resolve(options[Math.floor(Math.random()*options.length)])
-        })
+        return await this.game.randomChoice(options);
     }
 }
 
@@ -216,6 +210,17 @@ export class Game{
         }
         return new Promise((resolve)=>resolve());
     }
+    
+    //When networking is implemented, this will ensure all clients recieve the same random response
+    async randomChoice<T extends Choosable>(options:T[], highlightClass?:string|undefined): Promise<T>{
+        if(options.length == 0){
+            return new Promise<T>((resolve, reject) => reject())
+        }
+        return new Promise<T>((resolve)=>{
+            resolve(options[Math.floor(Math.random()*options.length)])
+        })
+    }
+
 }
 
 export class Zone extends Choosable{
@@ -240,7 +245,7 @@ export class Zone extends Choosable{
         return this.$zone; 
     }
 
-    addHero(player:"a"|"b", hero:Heros.Hero ){
+    async addHero(player:"a"|"b", hero:Heros.Hero ): Promise<{}>{
         hero.zone = this;
 
         if(player == "a"){
@@ -251,9 +256,12 @@ export class Zone extends Choosable{
             this.getElem().find('.zone__B').append(hero.render())
         }
         hero.getElem().addClass('animated bounceIn');
-        setTimeout(()=>
-            hero.getElem().removeClass('bounceIn')
-        , 1000);
+        return new Promise((resolve)=>{
+            setTimeout(()=>{
+                hero.getElem().removeClass('bounceIn')
+                resolve();
+            }, 1000);
+        })
     }
 
     empty(player:"a"|"b"): void{

@@ -11,7 +11,7 @@ export abstract class HeroEffect extends Effect {
 
 export abstract class HeroPassive extends Effect {}
 
-class EffectFailed extends Error {
+export class EffectFailed extends Error {
      constructor() {
         super("Effect Failed");
      }
@@ -39,6 +39,9 @@ export function parseEffects(json: any): Effect[]{
             }
             case "move":{
                 return new he_Move();
+            }
+            case "move_random":{
+                return new he_MoveRandom();
             }
             //Hero Passives
             case "strength":{
@@ -140,6 +143,12 @@ export class he_Attack extends HeroEffect{
         let foe = target.getMeleeFoe()
         if(foe){
             await foe.onTrigger(Game.GameEvent.ON_ATTACKED)
+            
+            // In case the melee target has changed
+            foe = target.getMeleeFoe()
+            if(!foe){
+                throw new EffectFailed();
+            }
             for(let e of this.effects){
                 await e.apply(user, foe);
             }
@@ -215,6 +224,26 @@ export class he_Move extends HeroEffect{
         return "%target% moves zone";
     }
 }
+export class he_MoveRandom extends HeroEffect{
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        try{
+            let zone = await target.getGame().randomChoice(target.getMoveableZones());
+            await target.moveZone(zone);
+            return new Promise<{}>(resolve=>resolve());
+        }catch(e){
+            throw new EffectFailed();
+        }
+    }
+
+    //is valid if the hero can move
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return target.getMoveableZones().length > 0;
+    }
+    description(): string{
+        return "%target% to a random zone";
+    }
+}
+
 
 class hp_Strength extends HeroPassive{
     value: number;

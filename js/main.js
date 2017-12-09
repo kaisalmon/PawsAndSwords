@@ -153,6 +153,7 @@ class EffectFailed extends Error {
         super("Effect Failed");
     }
 }
+exports.EffectFailed = EffectFailed;
 function parseEffects(json) {
     return json.map((json_e) => {
         var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
@@ -175,6 +176,9 @@ function parseEffects(json) {
             }
             case "move": {
                 return new he_Move();
+            }
+            case "move_random": {
+                return new he_MoveRandom();
             }
             //Hero Passives
             case "strength": {
@@ -265,6 +269,11 @@ class he_Attack extends HeroEffect {
             let foe = target.getMeleeFoe();
             if (foe) {
                 yield foe.onTrigger(Game.GameEvent.ON_ATTACKED);
+                // In case the melee target has changed
+                foe = target.getMeleeFoe();
+                if (!foe) {
+                    throw new EffectFailed();
+                }
                 for (let e of this.effects) {
                     yield e.apply(user, foe);
                 }
@@ -334,6 +343,28 @@ class he_Move extends HeroEffect {
     }
 }
 exports.he_Move = he_Move;
+class he_MoveRandom extends HeroEffect {
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let zone = yield target.getGame().randomChoice(target.getMoveableZones());
+                yield target.moveZone(zone);
+                return new Promise(resolve => resolve());
+            }
+            catch (e) {
+                throw new EffectFailed();
+            }
+        });
+    }
+    //is valid if the hero can move
+    isValid(user, target) {
+        return target.getMoveableZones().length > 0;
+    }
+    description() {
+        return "%target% to a random zone";
+    }
+}
+exports.he_MoveRandom = he_MoveRandom;
 class hp_Strength extends HeroPassive {
     constructor(value) {
         super();
@@ -495,7 +526,7 @@ class Party {
                     this.discard(raceCard);
                     let h = new Heros.Hero(raceCard, classCard, zone);
                     this.addHero(h);
-                    zone.addHero(this.game.activeId, h);
+                    yield zone.addHero(this.game.activeId, h);
                 }
                 else if (choice instanceof Cards.ActionCard) {
                     let action = choice;
@@ -547,13 +578,7 @@ exports.UIParty = UIParty;
 class RandomParty extends Party {
     makeChoice(options, highlightClass) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (options.length == 0) {
-                return new Promise((resolve, reject) => reject());
-            }
-            return new Promise((resolve) => {
-                console.log("Whaaat!?\n", options);
-                resolve(options[Math.floor(Math.random() * options.length)]);
-            });
+            return yield this.game.randomChoice(options);
         });
     }
 }
@@ -583,6 +608,17 @@ class Game {
             return new Promise((resolve) => resolve());
         });
     }
+    //When networking is implemented, this will ensure all clients recieve the same random response
+    randomChoice(options, highlightClass) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (options.length == 0) {
+                return new Promise((resolve, reject) => reject());
+            }
+            return new Promise((resolve) => {
+                resolve(options[Math.floor(Math.random() * options.length)]);
+            });
+        });
+    }
 }
 exports.Game = Game;
 class Zone extends Choosable {
@@ -599,17 +635,24 @@ class Zone extends Choosable {
         return this.$zone;
     }
     addHero(player, hero) {
-        hero.zone = this;
-        if (player == "a") {
-            this.heroA = hero;
-            this.getElem().find('.zone__A').append(hero.render());
-        }
-        else {
-            this.heroB = hero;
-            this.getElem().find('.zone__B').append(hero.render());
-        }
-        hero.getElem().addClass('animated bounceIn');
-        setTimeout(() => hero.getElem().removeClass('bounceIn'), 1000);
+        return __awaiter(this, void 0, void 0, function* () {
+            hero.zone = this;
+            if (player == "a") {
+                this.heroA = hero;
+                this.getElem().find('.zone__A').append(hero.render());
+            }
+            else {
+                this.heroB = hero;
+                this.getElem().find('.zone__B').append(hero.render());
+            }
+            hero.getElem().addClass('animated bounceIn');
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    hero.getElem().removeClass('bounceIn');
+                    resolve();
+                }, 1000);
+            });
+        });
     }
     empty(player) {
         if (player == "a") {
@@ -683,7 +726,17 @@ class Hero extends Game.Choosable {
                 }
                 for (let ov of on_events) {
                     for (let e of ov.effects) {
-                        yield e.apply(this, this);
+                        try {
+                            yield e.apply(this, this);
+                        }
+                        catch (e) {
+                            if (e instanceof Effects.EffectFailed) {
+                                //pass
+                            }
+                            else {
+                                throw e;
+                            }
+                        }
                     }
                 }
             }
@@ -787,7 +840,7 @@ class Hero extends Game.Choosable {
                 else {
                     oldZone.empty(this.getParty().label);
                 }
-                setTimeout(() => {
+                setTimeout(() => __awaiter(this, void 0, void 0, function* () {
                     if (this.$hero) {
                         this.$hero.removeClass('bounceOut').remove();
                     }
@@ -796,11 +849,12 @@ class Hero extends Game.Choosable {
                         if (ally.$hero) {
                             ally.$hero.removeClass('bounceOut').remove();
                         }
+                        //do not await, so animations play at the same time
                         oldZone.addHero(this.getParty().label, ally);
                     }
-                    zone.addHero(this.getParty().label, this);
+                    yield zone.addHero(this.getParty().label, this);
                     resolve();
-                }, 1000);
+                }), 1000);
             });
         });
     }
@@ -897,6 +951,7 @@ let all_cards_json = [
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10 },
     { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_attacked", effects: [
+                    { type: "move_random" },
                     { type: "damage", amount: "1" }
                 ] }
         ] },
