@@ -39,7 +39,8 @@ export function parseCard(json:any) : Card{
            } 
         } 
         return new HeroComponent(json.name, json.icon, type, role,
-                                 json.strength, json.arcana, json.health);
+                                 json.strength, json.arcana, json.health,
+                                 Effects.parseEffects(json.effects || []) as Effects.HeroPassive[]);
     }else if(json.type == "spell"){
         return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects) as Effects.HeroEffect[]);
 
@@ -103,12 +104,14 @@ export class HeroComponent extends Card{
     strength: number;
     arcana: number;
     health: number;
-    constructor(name:string, icon:string, type:CardType, role:Role, strength:number, arcana:number, health:number){
+    effects: Effects.HeroPassive[];
+    constructor(name:string, icon:string, type:CardType, role:Role, strength:number, arcana:number, health:number, effects:Effects.HeroPassive[]){
         super(name, icon, type);
         this.role = role;
         this.strength = strength;
         this.arcana = arcana;
         this.health = health;
+        this.effects = effects;
     }
     render(): JQuery{
         var $card = super.render();
@@ -116,6 +119,12 @@ export class HeroComponent extends Card{
         $('<div/>').addClass('card__strength').appendTo($row).text(this.strength)
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana)
         $('<div/>').addClass('card__health').appendTo($row).text(this.health)
+        var descriptions: string[] = this.effects.map(
+            (e) => e.description()
+        );
+        var description = descriptions.join(", ").replace(/%to target%/g,"to this hero").replace(/%target%/g,"this hero");
+        description = description.charAt(0).toUpperCase() + description.slice(1);
+        $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
     }
 }

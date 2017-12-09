@@ -1,4 +1,5 @@
 import * as Cards from "./cards";
+import * as Effects from "./effects";
 import * as Game from "./game"
 import * as $ from 'jquery'
 
@@ -29,9 +30,27 @@ export class Hero extends Game.Choosable{
         this.damage = 0;
         this.zone = zone;
     }
-    onNewTurn() : void{
+    async onTrigger(trigger: Game.GameEvent) : Promise<{}>{
+        let on_events = this.getPassivesOfType(Effects.hp_OnEvent)
+        if(on_events.length >0){
+            if(this.$hero){
+                this.$hero.addClass('animated flash');
+                await sleep(1);
+                this.$hero.removeClass('animated flash');
+            }
+            for(let ov of on_events){
+                for(let e of ov.effects){
+                    await e.apply(this, this);
+                }
+            }
+        }
+        return new Promise((resolve)=>resolve());
+    }
+    async onNewTurn() : Promise<{}>{
         this.usedAction = false;
         this.justJoined = false;
+        await this.onTrigger(Game.GameEvent.ON_NEW_TURN)
+        return new Promise((resolve)=>resolve());
     }
 
     getName() : string{
@@ -71,15 +90,28 @@ export class Hero extends Game.Choosable{
 
     getMoveableZones(): Game.Zone[]{
         let zones = this.getGame().zones;
-
         return zones.filter((z)=> (z.heroA || z.heroB) && z != this.zone )
+    }
+    
+    getPassives(): Effects.HeroPassive[]{
+       var effects: Effects.HeroPassive[] = [];
+       return effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+    }
+
+    getPassivesOfType<T extends Effects.HeroPassive>(t: new (...args: any[]) => T): T[] {
+        let result: T[] = [];
+        for (let child of this.getPassives()) {
+            if (child instanceof t)
+                result.push(<T>child);
+            }
+        return result;
     }
 
     canUseAction(a: Cards.ActionCard){
         if(this.justJoined || this.usedAction){
             return false;
         }
-        return true;
+        return a.effects[0].isValid(this, this);
     }
     async useAction(action: Cards.ActionCard) : Promise<{}>{
         console.log(this.getName()+" uses "+action.name);
@@ -108,7 +140,7 @@ export class Hero extends Game.Choosable{
                     ally.$hero.addClass('animated bounceOut') 
                 }
             }else{
-                //oldZone.empty(this.getParty().label);
+                oldZone.empty(this.getParty().label);
             }
             setTimeout(()=>{
                 if(this.$hero){

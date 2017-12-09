@@ -43,7 +43,13 @@ let all_cards_json = [
     {name:"Wizard", type:"class","role":"mage", icon:"pointy-hat", strength:0, arcana:2, health:8},
 
     {name:"Squirrel", type:"race",icon:"person", strength:1, arcana:1, health:10},
-    {name:"Boar", type:"race",icon:"person", strength:1, arcana:1, health:10},
+    {name:"Boar", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
+        {type:"on_new_turn", effects:[
+            {type:"all_foes", effects:[
+                {type:"damage", amount:"A + 1"}
+            ]} 
+        ]} 
+    ]},
 
     {name:"Self Wound", type:"spell",icon:"ragged-wound", effects:[
         {type:"damage", amount:"4"}

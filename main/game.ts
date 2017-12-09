@@ -27,6 +27,9 @@ class ChoiceFailed extends Error {
 }
 */
 
+export enum GameEvent{
+    ON_NEW_TURN
+}
 
 export abstract class Party{
     opponent: Party|null = null;
@@ -62,9 +65,11 @@ export abstract class Party{
     }
     getPossibleActions() : Choosable[]{
         let r : Choosable[] = [];
+
         if(!this.playedHero && this.hand.some((c)=>c.type == Cards.CardType.CLASS)){
             r = r.concat(this.hand.filter((c)=>c.type == Cards.CardType.RACE));
         }
+
         if(this.heros.length > 0){
             let usableActions = this.hand
                 .filter((c) => {
@@ -91,10 +96,10 @@ export abstract class Party{
         return empty.filter(z => z.center);
     }
 
-    onNewTurn(): void{
+    async onNewTurn(): Promise<{}>{
         this.playedHero = false;
         for(let h of this.heros){
-            h.onNewTurn();
+            await h.onNewTurn();
         }
         /*
         let handSize = this.hand.length;
@@ -103,10 +108,11 @@ export abstract class Party{
             this.drawCard();
         }
         */
+        return new Promise((resolve)=>resolve());
     }
 
     async playTurn() : Promise<{}>{
-        this.onNewTurn()
+        await this.onNewTurn()
         let choices:Choosable[];
         while((choices = this.getPossibleActions()).length > 0){
             choices.map((c)=>c.getElem().removeClass('active'))
@@ -188,8 +194,8 @@ export class Game{
     zones: Zone[];
     activeId: 'a'|'b' = 'a';
     constructor(deckA:Cards.Card[], deckB:Cards.Card[]){
-        this.partyA = new UIParty('a', this, deckA);
-        this.partyB = new RandomParty('b', this, deckB);
+        this.partyA = new UIParty('a', this, deckB);
+        this.partyB = new RandomParty('b', this, deckA);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
 
@@ -247,6 +253,14 @@ export class Zone extends Choosable{
         setTimeout(()=>
             hero.getElem().removeClass('bounceIn')
         , 1000);
+    }
+
+    empty(player:"a"|"b"): void{
+        if(player == "a"){
+            this.heroA = undefined;
+        }else{
+            this.heroB = undefined;
+        }
     }
 
     getHero(label: 'a'|'b'): Heros.Hero|undefined{

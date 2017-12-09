@@ -48,7 +48,7 @@ function parseCard(json) {
                 throw "Unknown role " + json.role;
             }
         }
-        return new HeroComponent(json.name, json.icon, type, role, json.strength, json.arcana, json.health);
+        return new HeroComponent(json.name, json.icon, type, role, json.strength, json.arcana, json.health, Effects.parseEffects(json.effects || []));
     }
     else if (json.type == "spell") {
         return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects));
@@ -103,12 +103,13 @@ class ActionCard extends Card {
 }
 exports.ActionCard = ActionCard;
 class HeroComponent extends Card {
-    constructor(name, icon, type, role, strength, arcana, health) {
+    constructor(name, icon, type, role, strength, arcana, health, effects) {
         super(name, icon, type);
         this.role = role;
         this.strength = strength;
         this.arcana = arcana;
         this.health = health;
+        this.effects = effects;
     }
     render() {
         var $card = super.render();
@@ -116,6 +117,10 @@ class HeroComponent extends Card {
         $('<div/>').addClass('card__strength').appendTo($row).text(this.strength);
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana);
         $('<div/>').addClass('card__health').appendTo($row).text(this.health);
+        var descriptions = this.effects.map((e) => e.description());
+        var description = descriptions.join(", ").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
+        description = description.charAt(0).toUpperCase() + description.slice(1);
+        $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
     }
 }
@@ -133,12 +138,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Heros = require("./heros");
+const Game = require("./game");
 class Effect {
 }
 exports.Effect = Effect;
 class HeroEffect extends Effect {
 }
 exports.HeroEffect = HeroEffect;
+class HeroPassive extends Effect {
+}
+exports.HeroPassive = HeroPassive;
 class EffectFailed extends Error {
     constructor() {
         super("Effect Failed");
@@ -147,8 +156,10 @@ class EffectFailed extends Error {
 function parseEffects(json) {
     return json.map((json_e) => {
         var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
+        var value = json_e.value;
         var effects = json_e.effects ? parseEffects(json_e.effects) : undefined;
         switch (json_e.type) {
+            //Hero Effects
             case "damage": {
                 if (amount)
                     return new he_Damage(amount);
@@ -164,6 +175,16 @@ function parseEffects(json) {
             }
             case "move": {
                 return new he_Move();
+            }
+            //Hero Passives
+            case "strength": {
+                return new hp_Strength(value || 1);
+            }
+            case "action": {
+                return new hp_Action(effects);
+            }
+            case "on_new_turn": {
+                return new hp_OnEvent(effects, Game.GameEvent.ON_NEW_TURN, "At the start of each turn");
             }
             default: {
                 throw "Unknown effect " + json_e.type;
@@ -198,6 +219,9 @@ class he_Damage extends HeroEffect {
             });
         });
     }
+    isValid(user, target) {
+        return true;
+    }
     description() {
         return "deal " + this.amount + " damage %to target%";
     }
@@ -220,11 +244,14 @@ class he_AllFoes extends HeroEffect {
             return new Promise((resolve) => resolve());
         });
     }
+    //Is valid as long as at least one foe is a valid target for the first effect
+    isValid(user, target) {
+        return target.getParty().getOpponent().heros.some((h) => this.effects[0].isValid(user, target));
+    }
     description() {
         return this.effects.map((e) => e.description().replace(/%target%/, "all foes").replace(/%to target%/, "to all foes")).join(",");
     }
 }
-exports.he_AllFoes = he_AllFoes;
 class he_Attack extends HeroEffect {
     constructor(effects) {
         super();
@@ -241,6 +268,14 @@ class he_Attack extends HeroEffect {
             }
             throw new EffectFailed();
         });
+    }
+    //If the target has a foe in melee range, and that foe is a valid target for the first effect
+    isValid(user, target) {
+        var foe = target.getMeleeFoe();
+        if (!foe) {
+            return false;
+        }
+        return this.effects[0].isValid(user, foe);
     }
     description() {
         return this.effects.map((e) => '<b>Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
@@ -265,11 +300,14 @@ class he_RangedAttack extends HeroEffect {
             throw new EffectFailed();
         });
     }
+    //Is valid as long as at least one foe is a valid target for the first effect
+    isValid(user, target) {
+        return target.getParty().getOpponent().heros.some((h) => this.effects[0].isValid(user, target));
+    }
     description() {
         return this.effects.map((e) => '<b>Ranged Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
     }
 }
-exports.he_RangedAttack = he_RangedAttack;
 class he_Move extends HeroEffect {
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -283,13 +321,48 @@ class he_Move extends HeroEffect {
             }
         });
     }
+    //is valid if the hero can move
+    isValid(user, target) {
+        return target.getMoveableZones().length > 0;
+    }
     description() {
         return "%target% moves zone";
     }
 }
 exports.he_Move = he_Move;
+class hp_Strength extends HeroPassive {
+    constructor(value) {
+        super();
+        this.value = value;
+    }
+    description() {
+        return "%target% has +" + this.value + " <b>Strength</b>";
+    }
+}
+class hp_Action extends HeroPassive {
+    constructor(effects) {
+        super();
+        this.effects = effects;
+    }
+    description() {
+        return "<b>Action:</b> " + this.effects.map((e) => e.description()).join(", ");
+    }
+}
+exports.hp_Action = hp_Action;
+class hp_OnEvent extends HeroPassive {
+    constructor(effects, trigger, description) {
+        super();
+        this.effects = effects;
+        this.trigger = trigger;
+        this.description_text = description;
+    }
+    description() {
+        return this.description_text + ' ' + this.effects.map((e) => e.description()).join(", ");
+    }
+}
+exports.hp_OnEvent = hp_OnEvent;
 
-},{"./heros":4}],3:[function(require,module,exports){
+},{"./game":3,"./heros":4}],3:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -326,6 +399,10 @@ class ChoiceFailed extends Error {
      }
 }
 */
+var GameEvent;
+(function (GameEvent) {
+    GameEvent[GameEvent["ON_NEW_TURN"] = 0] = "ON_NEW_TURN";
+})(GameEvent = exports.GameEvent || (exports.GameEvent = {}));
 class Party {
     constructor(label, game, deck) {
         this.opponent = null;
@@ -381,21 +458,24 @@ class Party {
         return empty.filter(z => z.center);
     }
     onNewTurn() {
-        this.playedHero = false;
-        for (let h of this.heros) {
-            h.onNewTurn();
-        }
-        /*
-        let handSize = this.hand.length;
-        let toDraw = 5 - handSize;
-        for(let i = 0; i < toDraw; i++){
-            this.drawCard();
-        }
-        */
+        return __awaiter(this, void 0, void 0, function* () {
+            this.playedHero = false;
+            for (let h of this.heros) {
+                yield h.onNewTurn();
+            }
+            /*
+            let handSize = this.hand.length;
+            let toDraw = 5 - handSize;
+            for(let i = 0; i < toDraw; i++){
+                this.drawCard();
+            }
+            */
+            return new Promise((resolve) => resolve());
+        });
     }
     playTurn() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.onNewTurn();
+            yield this.onNewTurn();
             let choices;
             while ((choices = this.getPossibleActions()).length > 0) {
                 choices.map((c) => c.getElem().removeClass('active'));
@@ -476,8 +556,8 @@ exports.RandomParty = RandomParty;
 class Game {
     constructor(deckA, deckB) {
         this.activeId = 'a';
-        this.partyA = new UIParty('a', this, deckA);
-        this.partyB = new RandomParty('b', this, deckB);
+        this.partyA = new UIParty('a', this, deckB);
+        this.partyB = new RandomParty('b', this, deckA);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
         this.zones = [new Zone(), new Zone(true), new Zone()]; //3 zones, with center zone marked
@@ -526,6 +606,14 @@ class Zone extends Choosable {
         hero.getElem().addClass('animated bounceIn');
         setTimeout(() => hero.getElem().removeClass('bounceIn'), 1000);
     }
+    empty(player) {
+        if (player == "a") {
+            this.heroA = undefined;
+        }
+        else {
+            this.heroB = undefined;
+        }
+    }
     getHero(label) {
         if (label == 'a') {
             return this.heroA;
@@ -558,6 +646,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const Effects = require("./effects");
 const Game = require("./game");
 const $ = require("jquery");
 function sleep(seconds) {
@@ -578,9 +667,31 @@ class Hero extends Game.Choosable {
         this.damage = 0;
         this.zone = zone;
     }
+    onTrigger(trigger) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let on_events = this.getPassivesOfType(Effects.hp_OnEvent);
+            if (on_events.length > 0) {
+                if (this.$hero) {
+                    this.$hero.addClass('animated flash');
+                    yield sleep(1);
+                    this.$hero.removeClass('animated flash');
+                }
+                for (let ov of on_events) {
+                    for (let e of ov.effects) {
+                        yield e.apply(this, this);
+                    }
+                }
+            }
+            return new Promise((resolve) => resolve());
+        });
+    }
     onNewTurn() {
-        this.usedAction = false;
-        this.justJoined = false;
+        return __awaiter(this, void 0, void 0, function* () {
+            this.usedAction = false;
+            this.justJoined = false;
+            yield this.onTrigger(Game.GameEvent.ON_NEW_TURN);
+            return new Promise((resolve) => resolve());
+        });
     }
     getName() {
         return this.raceCard.name + " " + this.classCard.name;
@@ -619,11 +730,23 @@ class Hero extends Game.Choosable {
         let zones = this.getGame().zones;
         return zones.filter((z) => (z.heroA || z.heroB) && z != this.zone);
     }
+    getPassives() {
+        var effects = [];
+        return effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+    }
+    getPassivesOfType(t) {
+        let result = [];
+        for (let child of this.getPassives()) {
+            if (child instanceof t)
+                result.push(child);
+        }
+        return result;
+    }
     canUseAction(a) {
         if (this.justJoined || this.usedAction) {
             return false;
         }
-        return true;
+        return a.effects[0].isValid(this, this);
     }
     useAction(action) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -657,7 +780,7 @@ class Hero extends Game.Choosable {
                     }
                 }
                 else {
-                    //oldZone.empty(this.getParty().label);
+                    oldZone.empty(this.getParty().label);
                 }
                 setTimeout(() => {
                     if (this.$hero) {
@@ -721,7 +844,7 @@ class Amount {
 }
 exports.Amount = Amount;
 
-},{"./game":3,"jquery":6}],5:[function(require,module,exports){
+},{"./effects":2,"./game":3,"jquery":6}],5:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -767,7 +890,13 @@ let all_cards_json = [
     { name: "Fighter", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 2, arcana: 0, health: 12 },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8 },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10 },
-    { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10 },
+    { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+            { type: "on_new_turn", effects: [
+                    { type: "all_foes", effects: [
+                            { type: "damage", amount: "A + 1" }
+                        ] }
+                ] }
+        ] },
     { name: "Self Wound", type: "spell", icon: "ragged-wound", effects: [
             { type: "damage", amount: "4" }
         ] },
