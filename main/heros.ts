@@ -82,6 +82,22 @@ export class Hero extends Game.Choosable{
         return new Promise((resolve)=>resolve());
     }
 
+    async slay() : Promise<{}>{
+        await this.onTrigger(Game.GameEvent.ON_SLAIN)
+        this.zone.empty(this.getParty().label)
+        this.getParty().heros.splice(this.getParty().heros.indexOf(this), 1);
+        if(this.$hero){
+            this.$hero.addClass('animated rotateOutDownLeft') 
+            setTimeout(()=>{
+                if(this.$hero){
+                    this.$hero.remove()
+                    }
+                }, 1000);
+        }
+        return new Promise((resolve)=>resolve());
+    }
+
+
     getName() : string{
         return this.raceCard.name+" "+this.classCard.name;
     }
