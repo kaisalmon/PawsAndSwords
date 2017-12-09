@@ -11,6 +11,15 @@ function sleep(seconds: number) {
   });
 }
 
+export class TempPassive{
+    effects: Effects.HeroPassive[];
+    removal_trigger: Game.GameEvent;
+    constructor(effects: Effects.HeroPassive[], trigger: Game.GameEvent){
+        this.effects = effects;
+        this.removal_trigger = trigger;
+    }
+}
+
 export class Hero extends Game.Choosable{
     classCard: Cards.HeroComponent; 
     raceCard: Cards.HeroComponent;
@@ -23,6 +32,8 @@ export class Hero extends Game.Choosable{
     usedAction: boolean = false;
     justJoined: boolean = true;
 
+    tempPassives: TempPassive[] = [];
+
     constructor(raceCard: Cards.HeroComponent, classCard: Cards.HeroComponent, zone: Game.Zone){
         super();
         this.classCard = classCard;
@@ -31,6 +42,10 @@ export class Hero extends Game.Choosable{
         this.zone = zone;
     }
     async onTrigger(trigger: Game.GameEvent) : Promise<{}>{
+        //Remove tempPassives
+        this.tempPassives = this.tempPassives.filter((f)=>f.removal_trigger != trigger);
+        
+        //Fire OnEvent passives
         let on_events = this.getPassivesOfType(Effects.hp_OnEvent).filter((hp)=>hp.trigger == trigger);
         if(on_events.length >0){
             if(this.$hero){
@@ -109,6 +124,8 @@ export class Hero extends Game.Choosable{
     
     getPassives(depth=0, maxDepth=10): Effects.HeroPassive[]{
         var effects: Effects.HeroPassive[] = [];
+
+        //Get passives from allies AllAlliesHave effects
         for(let ally of this.getAllies()){
             let allAllyEffects = ally.getPassivesOfType(Effects.hp_AllAlliesHave, depth+1, maxDepth);
             for(let source of allAllyEffects){
@@ -116,9 +133,16 @@ export class Hero extends Game.Choosable{
             }
         }
 
-        effects =  effects.concat(this.raceCard.effects).concat(this.classCard.effects);
-        let activePassives: Effects.HeroPassive[][] = effects.map((e)=>e.getActivePassives(this));
+        //Add passives from temp passives
+        for(let tp of this.tempPassives){
+            effects =  effects.concat(tp.effects);
+        }
 
+        //Add passives from race and class
+        effects =  effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+
+        //Map passives to ActivePassives (To resolve conditionals)
+        let activePassives: Effects.HeroPassive[][] = effects.map((e)=>e.getActivePassives(this));
         effects = activePassives.reduce((arr, e)=>arr.concat(e), []);
         return effects;
     }
@@ -191,6 +215,10 @@ export class Hero extends Game.Choosable{
                 resolve();
             },1000)
         })
+    }
+
+    addTempPassive(tempPassive: TempPassive){
+        this.tempPassives.push(tempPassive)
     }
 
     render(): JQuery {

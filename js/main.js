@@ -189,6 +189,15 @@ function parseEffects(json) {
             case "move_random": {
                 return new he_MoveRandom();
             }
+            case "until_new_turn": {
+                return new he_UntilEvent(effects, Game.GameEvent.ON_NEW_TURN, "until the start of their next turn");
+            }
+            case "until_attacked": {
+                return new he_UntilEvent(effects, Game.GameEvent.ON_ATTACKED, "until the next time they are attacked");
+            }
+            case "until_attacks": {
+                return new he_UntilEvent(effects, Game.GameEvent.ON_ATTACKS, "until after their next attack");
+            }
             //Hero Passives
             case "strength": {
                 return new hp_Strength(value || 1);
@@ -406,6 +415,28 @@ class he_MoveRandom extends HeroEffect {
     }
 }
 exports.he_MoveRandom = he_MoveRandom;
+class he_UntilEvent extends HeroEffect {
+    constructor(effects, trigger, description) {
+        super();
+        this.effects = effects;
+        this.trigger = trigger;
+        this.description_text = description;
+    }
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            target.addTempPassive(new Heros.TempPassive(this.effects, this.trigger));
+            return new Promise(resolve => resolve());
+        });
+    }
+    //is valid if the hero can move
+    isValid(user, target) {
+        return true;
+    }
+    description() {
+        return '%target% has ' + this.effects.map((e) => e.description()).join(", ") + " " + this.description_text;
+    }
+}
+exports.he_UntilEvent = he_UntilEvent;
 class hp_Strength extends HeroPassive {
     constructor(value) {
         super();
@@ -797,12 +828,20 @@ function sleep(seconds) {
         }, seconds * 1000);
     });
 }
+class TempPassive {
+    constructor(effects, trigger) {
+        this.effects = effects;
+        this.removal_trigger = trigger;
+    }
+}
+exports.TempPassive = TempPassive;
 class Hero extends Game.Choosable {
     constructor(raceCard, classCard, zone) {
         super();
         //status flags
         this.usedAction = false;
         this.justJoined = true;
+        this.tempPassives = [];
         this.classCard = classCard;
         this.raceCard = raceCard;
         this.damage = 0;
@@ -810,6 +849,9 @@ class Hero extends Game.Choosable {
     }
     onTrigger(trigger) {
         return __awaiter(this, void 0, void 0, function* () {
+            //Remove tempPassives
+            this.tempPassives = this.tempPassives.filter((f) => f.removal_trigger != trigger);
+            //Fire OnEvent passives
             let on_events = this.getPassivesOfType(Effects.hp_OnEvent).filter((hp) => hp.trigger == trigger);
             if (on_events.length > 0) {
                 if (this.$hero) {
@@ -887,13 +929,20 @@ class Hero extends Game.Choosable {
     }
     getPassives(depth = 0, maxDepth = 10) {
         var effects = [];
+        //Get passives from allies AllAlliesHave effects
         for (let ally of this.getAllies()) {
             let allAllyEffects = ally.getPassivesOfType(Effects.hp_AllAlliesHave, depth + 1, maxDepth);
             for (let source of allAllyEffects) {
                 effects = effects.concat(source.effects);
             }
         }
+        //Add passives from temp passives
+        for (let tp of this.tempPassives) {
+            effects = effects.concat(tp.effects);
+        }
+        //Add passives from race and class
         effects = effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+        //Map passives to ActivePassives (To resolve conditionals)
         let activePassives = effects.map((e) => e.getActivePassives(this));
         effects = activePassives.reduce((arr, e) => arr.concat(e), []);
         return effects;
@@ -971,6 +1020,9 @@ class Hero extends Game.Choosable {
                 }), 1000);
             });
         });
+    }
+    addTempPassive(tempPassive) {
+        this.tempPassives.push(tempPassive);
     }
     render() {
         this.$hero = $('<div/>').addClass('hero');
@@ -1078,6 +1130,14 @@ let all_cards_json = [
             { type: "on_attacks", effects: [
                     { type: "move_random" }
                 ] }
+        ] },
+    { name: "Thief", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 1, arcana: 0, health: 12, effects: [
+            { type: "on_join", effects: [
+                    { type: "until_attacks", effects: [
+                            { type: "invisible" },
+                            { type: "armored" },
+                        ] },
+                ] },
         ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
             { type: "while_alone", effects: [

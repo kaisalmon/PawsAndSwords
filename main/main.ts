@@ -52,6 +52,15 @@ let all_cards_json = [
         ]} 
     ]},
 
+    {name:"Thief", type:"class","role":"warrior", icon:"diamond-hilt", strength:1, arcana:0, health:12, effects:[
+        {type:"on_join", effects:[
+            {type:"until_attacks", effects:[
+                {type:"invisible"}, 
+                {type:"armored"}, 
+            ]},
+        ]},
+    ]},
+
     {name:"Wizard", type:"class","role":"mage", icon:"pointy-hat", strength:0, arcana:2, health:8, effects:[
         {type:"while_alone", effects:[
             {type:"invisible"}, 

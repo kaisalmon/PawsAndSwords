@@ -53,6 +53,16 @@ export function parseEffects(json: any): Effect[]{
             case "move_random":{
                 return new he_MoveRandom();
             }
+            case "until_new_turn":{
+                return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_NEW_TURN ,"until the start of their next turn");
+            }
+            case "until_attacked":{
+                return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_ATTACKED ,"until the next time they are attacked");
+            }
+            case "until_attacks":{
+                return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_ATTACKS ,"until after their next attack");
+            }
+
             //Hero Passives
             case "strength":{
                 return new hp_Strength(value||1);
@@ -284,6 +294,30 @@ export class he_MoveRandom extends HeroEffect{
         return "%target% moves to a random zone";
     }
 }
+export class he_UntilEvent extends HeroEffect{
+    effects: HeroPassive[];
+    trigger: Game.GameEvent;
+    description_text: string;
+    constructor(effects: HeroPassive[], trigger: Game.GameEvent, description:string){
+        super();
+        this.effects = effects; 
+        this.trigger = trigger;
+        this.description_text = description;
+    }
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        target.addTempPassive(new Heros.TempPassive(this.effects, this.trigger)) 
+        return new Promise<{}>(resolve=>resolve());
+    }
+
+    //is valid if the hero can move
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return true;
+    }
+    description(): string{
+        return '%target% has '+ this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
+    }
+}
+
 
 
 class hp_Strength extends HeroPassive{
