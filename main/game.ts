@@ -28,7 +28,8 @@ class ChoiceFailed extends Error {
 */
 
 export enum GameEvent{
-    ON_NEW_TURN
+    ON_NEW_TURN,
+    ON_ATTACKED
 }
 
 export abstract class Party{

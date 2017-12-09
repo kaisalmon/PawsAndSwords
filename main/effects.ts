@@ -50,6 +50,9 @@ export function parseEffects(json: any): Effect[]{
             case "on_new_turn":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_NEW_TURN ,"At the start of each turn");
             }
+            case "on_attacked":{
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKED ,"When %target% is attacked");
+            }
             default:{
                 throw "Unknown effect "+json_e.type;
             }
@@ -136,6 +139,7 @@ export class he_Attack extends HeroEffect{
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
         let foe = target.getMeleeFoe()
         if(foe){
+            await foe.onTrigger(Game.GameEvent.ON_ATTACKED)
             for(let e of this.effects){
                 await e.apply(user, foe);
             }

@@ -186,6 +186,9 @@ function parseEffects(json) {
             case "on_new_turn": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_NEW_TURN, "At the start of each turn");
             }
+            case "on_attacked": {
+                return new hp_OnEvent(effects, Game.GameEvent.ON_ATTACKED, "When %target% is attacked");
+            }
             default: {
                 throw "Unknown effect " + json_e.type;
             }
@@ -261,6 +264,7 @@ class he_Attack extends HeroEffect {
         return __awaiter(this, void 0, void 0, function* () {
             let foe = target.getMeleeFoe();
             if (foe) {
+                yield foe.onTrigger(Game.GameEvent.ON_ATTACKED);
                 for (let e of this.effects) {
                     yield e.apply(user, foe);
                 }
@@ -402,6 +406,7 @@ class ChoiceFailed extends Error {
 var GameEvent;
 (function (GameEvent) {
     GameEvent[GameEvent["ON_NEW_TURN"] = 0] = "ON_NEW_TURN";
+    GameEvent[GameEvent["ON_ATTACKED"] = 1] = "ON_ATTACKED";
 })(GameEvent = exports.GameEvent || (exports.GameEvent = {}));
 class Party {
     constructor(label, game, deck) {
@@ -669,7 +674,7 @@ class Hero extends Game.Choosable {
     }
     onTrigger(trigger) {
         return __awaiter(this, void 0, void 0, function* () {
-            let on_events = this.getPassivesOfType(Effects.hp_OnEvent);
+            let on_events = this.getPassivesOfType(Effects.hp_OnEvent).filter((hp) => hp.trigger == trigger);
             if (on_events.length > 0) {
                 if (this.$hero) {
                     this.$hero.addClass('animated flash');
@@ -891,10 +896,8 @@ let all_cards_json = [
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8 },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10 },
     { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
-            { type: "on_new_turn", effects: [
-                    { type: "all_foes", effects: [
-                            { type: "damage", amount: "A + 1" }
-                        ] }
+            { type: "on_attacked", effects: [
+                    { type: "damage", amount: "1" }
                 ] }
         ] },
     { name: "Self Wound", type: "spell", icon: "ragged-wound", effects: [

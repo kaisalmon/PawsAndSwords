@@ -44,10 +44,8 @@ let all_cards_json = [
 
     {name:"Squirrel", type:"race",icon:"person", strength:1, arcana:1, health:10},
     {name:"Boar", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
-        {type:"on_new_turn", effects:[
-            {type:"all_foes", effects:[
-                {type:"damage", amount:"A + 1"}
-            ]} 
+        {type:"on_attacked", effects:[
+            {type:"damage", amount:"1"}
         ]} 
     ]},
 

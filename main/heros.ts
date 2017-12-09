@@ -31,7 +31,7 @@ export class Hero extends Game.Choosable{
         this.zone = zone;
     }
     async onTrigger(trigger: Game.GameEvent) : Promise<{}>{
-        let on_events = this.getPassivesOfType(Effects.hp_OnEvent)
+        let on_events = this.getPassivesOfType(Effects.hp_OnEvent).filter((hp)=>hp.trigger == trigger);
         if(on_events.length >0){
             if(this.$hero){
                 this.$hero.addClass('animated flash');
