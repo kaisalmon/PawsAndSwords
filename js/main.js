@@ -193,6 +193,9 @@ function parseEffects(json) {
             case "on_attacked": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_ATTACKED, "When %target% is attacked");
             }
+            case "on_join": {
+                return new hp_OnEvent(effects, Game.GameEvent.ON_JOIN, "When %target% enters the arena");
+            }
             default: {
                 throw "Unknown effect " + json_e.type;
             }
@@ -361,7 +364,7 @@ class he_MoveRandom extends HeroEffect {
         return target.getMoveableZones().length > 0;
     }
     description() {
-        return "%target% to a random zone";
+        return "%target% moves to a random zone";
     }
 }
 exports.he_MoveRandom = he_MoveRandom;
@@ -438,6 +441,7 @@ var GameEvent;
 (function (GameEvent) {
     GameEvent[GameEvent["ON_NEW_TURN"] = 0] = "ON_NEW_TURN";
     GameEvent[GameEvent["ON_ATTACKED"] = 1] = "ON_ATTACKED";
+    GameEvent[GameEvent["ON_JOIN"] = 2] = "ON_JOIN";
 })(GameEvent = exports.GameEvent || (exports.GameEvent = {}));
 class Party {
     constructor(label, game, deck) {
@@ -527,6 +531,7 @@ class Party {
                     let h = new Heros.Hero(raceCard, classCard, zone);
                     this.addHero(h);
                     yield zone.addHero(this.game.activeId, h);
+                    yield h.onTrigger(GameEvent.ON_JOIN);
                 }
                 else if (choice instanceof Cards.ActionCard) {
                     let action = choice;
@@ -948,11 +953,17 @@ class GameRenderer {
 let all_cards_json = [
     { name: "Fighter", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 2, arcana: 0, health: 12 },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8 },
-    { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10 },
-    { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+    { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_attacked", effects: [
                     { type: "move_random" },
                     { type: "damage", amount: "1" }
+                ] }
+        ] },
+    { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+            { type: "on_join", effects: [
+                    { type: "attack", effects: [
+                            { type: "damage", amount: "2" }
+                        ] }
                 ] }
         ] },
     { name: "Self Wound", type: "spell", icon: "ragged-wound", effects: [

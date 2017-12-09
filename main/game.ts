@@ -29,7 +29,8 @@ class ChoiceFailed extends Error {
 
 export enum GameEvent{
     ON_NEW_TURN,
-    ON_ATTACKED
+    ON_ATTACKED,
+    ON_JOIN
 }
 
 export abstract class Party{
@@ -133,6 +134,7 @@ export abstract class Party{
                 let h = new Heros.Hero(raceCard, classCard, zone);
                 this.addHero(h);
                 await zone.addHero(this.game.activeId, h);
+                await h.onTrigger(GameEvent.ON_JOIN);
             }else if(choice instanceof Cards.ActionCard){
                 let action = choice;
                 choice.getElem().addClass('active');

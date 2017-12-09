@@ -56,6 +56,9 @@ export function parseEffects(json: any): Effect[]{
             case "on_attacked":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKED ,"When %target% is attacked");
             }
+            case "on_join":{
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_JOIN ,"When %target% enters the arena");
+            }
             default:{
                 throw "Unknown effect "+json_e.type;
             }
@@ -240,7 +243,7 @@ export class he_MoveRandom extends HeroEffect{
         return target.getMoveableZones().length > 0;
     }
     description(): string{
-        return "%target% to a random zone";
+        return "%target% moves to a random zone";
     }
 }
 
