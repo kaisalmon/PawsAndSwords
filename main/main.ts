@@ -118,6 +118,17 @@ let all_cards_json = [
             {type:"damage", amount:"A + S"}
         ]} 
     ]},
+
+    {name:"Shockwave", type:"spell",icon:"winged-sword", effects:[
+        {type:"attack", effects:[
+            {type:"damage", amount:"S"}
+        ]}, 
+        {type:"all_foes", effects:[
+            {type:"until_turn_ends", effects:[
+                {type:"staggered"}
+            ]} 
+        ]} 
+    ]},
 ]
 
 let deckA:Cards.Card[] = [];

@@ -143,6 +143,7 @@ var Keyword;
 (function (Keyword) {
     Keyword["ARMORED"] = "Armored";
     Keyword["INVISIBLE"] = "Invisible";
+    Keyword["STAGGERED"] = "Staggered";
 })(Keyword = exports.Keyword || (exports.Keyword = {}));
 class Effect {
 }
@@ -191,6 +192,9 @@ function parseEffects(json) {
             case "until_new_turn": {
                 return new he_UntilEvent(effects, Game.GameEvent.ON_NEW_TURN, "until the start of their next turn");
             }
+            case "until_turn_ends": {
+                return new he_UntilEvent(effects, Game.GameEvent.ON_TURN_END, "until the end of their turn");
+            }
             case "until_attacked": {
                 return new he_UntilEvent(effects, Game.GameEvent.ON_ATTACKED, "until the next time they are attacked");
             }
@@ -200,6 +204,9 @@ function parseEffects(json) {
             //Hero Passives
             case "on_new_turn": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_NEW_TURN, "At the start of each turn");
+            }
+            case "on_end_turn": {
+                return new hp_OnEvent(effects, Game.GameEvent.ON_TURN_END, "At the end of each turn");
             }
             case "on_attacked": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_ATTACKED, "When %target% is attacked");
@@ -218,6 +225,9 @@ function parseEffects(json) {
             }
             case "invisible": {
                 return new hp_Keyword(Keyword.INVISIBLE);
+            }
+            case "staggered": {
+                return new hp_Keyword(Keyword.STAGGERED);
             }
             case "while_damaged": {
                 return new hp_WhileCond(effects, (h) => h.damage > 0, "while damaged");
@@ -296,7 +306,7 @@ class he_AllFoes extends HeroEffect {
         return target.getParty().getOpponent().heros.some((h) => this.effects[0].isValid(user, target));
     }
     description() {
-        return this.effects.map((e) => e.description().replace(/%target%/, "all foes").replace(/%to target%/, "to all foes")).join(",");
+        return this.effects.map((e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to all foe")).join(",");
     }
 }
 class he_Attack extends HeroEffect {
@@ -541,9 +551,10 @@ class ChoiceFailed extends Error {
 var GameEvent;
 (function (GameEvent) {
     GameEvent[GameEvent["ON_NEW_TURN"] = 0] = "ON_NEW_TURN";
-    GameEvent[GameEvent["ON_ATTACKED"] = 1] = "ON_ATTACKED";
-    GameEvent[GameEvent["ON_ATTACKS"] = 2] = "ON_ATTACKS";
-    GameEvent[GameEvent["ON_JOIN"] = 3] = "ON_JOIN";
+    GameEvent[GameEvent["ON_TURN_END"] = 1] = "ON_TURN_END";
+    GameEvent[GameEvent["ON_ATTACKED"] = 2] = "ON_ATTACKED";
+    GameEvent[GameEvent["ON_ATTACKS"] = 3] = "ON_ATTACKS";
+    GameEvent[GameEvent["ON_JOIN"] = 4] = "ON_JOIN";
 })(GameEvent = exports.GameEvent || (exports.GameEvent = {}));
 class Party {
     constructor(label, game, deck) {
@@ -617,7 +628,9 @@ class Party {
     }
     playTurn() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.onUpdate();
             yield this.onNewTurn();
+            this.onUpdate();
             let choices;
             while ((choices = this.getPossibleActions()).length > 0) {
                 choices.map((c) => c.getElem().removeClass('active'));
@@ -645,6 +658,9 @@ class Party {
                     this.discard(action);
                 }
                 this.onUpdate();
+            }
+            for (let h of this.heros) {
+                h.onTrigger(GameEvent.ON_TURN_END);
             }
             console.log("Ending turn");
             return new Promise((resolve) => resolve());
@@ -948,7 +964,7 @@ class Hero extends Game.Choosable {
         return this.getParty().heros.filter((h) => h !== this);
     }
     canUseAction(a) {
-        if (this.justJoined || this.usedAction) {
+        if (this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)) {
             return false;
         }
         return a.effects[0].isValid(this, this);
@@ -1029,6 +1045,8 @@ class Hero extends Game.Choosable {
         }
         let opacity = this.hasKeyword(Effects.Keyword.INVISIBLE) ? 0.7 : 1;
         this.$hero.css('opacity', opacity);
+        let transform = this.hasKeyword(Effects.Keyword.STAGGERED) ? "rotate(15deg)" : "none";
+        this.$hero.css('transform', transform);
     }
     getElem() {
         if (this.$hero) {
@@ -1170,6 +1188,16 @@ let all_cards_json = [
     { name: "Smite", type: "spell", icon: "winged-sword", effects: [
             { type: "attack", effects: [
                     { type: "damage", amount: "A + S" }
+                ] }
+        ] },
+    { name: "Shockwave", type: "spell", icon: "winged-sword", effects: [
+            { type: "attack", effects: [
+                    { type: "damage", amount: "S" }
+                ] },
+            { type: "all_foes", effects: [
+                    { type: "until_turn_ends", effects: [
+                            { type: "staggered" }
+                        ] }
                 ] }
         ] },
 ];

@@ -29,6 +29,7 @@ class ChoiceFailed extends Error {
 
 export enum GameEvent{
     ON_NEW_TURN,
+    ON_TURN_END,
     ON_ATTACKED,
     ON_ATTACKS,
     ON_JOIN
@@ -115,7 +116,9 @@ export abstract class Party{
     }
 
     async playTurn() : Promise<{}>{
+        this.onUpdate();
         await this.onNewTurn()
+        this.onUpdate();
         let choices:Choosable[];
         while((choices = this.getPossibleActions()).length > 0){
             choices.map((c)=>c.getElem().removeClass('active'))
@@ -147,6 +150,11 @@ export abstract class Party{
             }
             this.onUpdate();
         }
+
+        for(let h of this.heros){
+            h.onTrigger(GameEvent.ON_TURN_END);
+        }
+
         console.log("Ending turn");
         return new Promise((resolve)=>resolve()) 
     }

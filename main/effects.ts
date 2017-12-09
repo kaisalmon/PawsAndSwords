@@ -3,7 +3,8 @@ import * as Game from "./game";
 
 export enum Keyword{
     ARMORED="Armored",
-    INVISIBLE="Invisible"
+    INVISIBLE="Invisible",
+    STAGGERED="Staggered"
 }
 
 export abstract class Effect {
@@ -55,6 +56,9 @@ export function parseEffects(json: any): Effect[]{
             case "until_new_turn":{
                 return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_NEW_TURN ,"until the start of their next turn");
             }
+            case "until_turn_ends":{
+                return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_TURN_END ,"until the end of their turn");
+            }
             case "until_attacked":{
                 return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_ATTACKED ,"until the next time they are attacked");
             }
@@ -65,6 +69,9 @@ export function parseEffects(json: any): Effect[]{
             //Hero Passives
             case "on_new_turn":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_NEW_TURN ,"At the start of each turn");
+            }
+            case "on_end_turn":{
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_TURN_END ,"At the end of each turn");
             }
             case "on_attacked":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKED ,"When %target% is attacked");
@@ -83,6 +90,9 @@ export function parseEffects(json: any): Effect[]{
             }
             case "invisible":{
                 return new hp_Keyword(Keyword.INVISIBLE);
+            }
+            case "staggered":{
+                return new hp_Keyword(Keyword.STAGGERED);
             }
             case "while_damaged":{
                 return new hp_WhileCond(effects as HeroPassive[], (h)=>h.damage > 0, "while damaged");
@@ -167,7 +177,7 @@ class he_AllFoes extends HeroEffect{
 
     description(): string{
         return this.effects.map(
-            (e) => e.description().replace(/%target%/, "all foes").replace(/%to target%/, "to all foes")
+            (e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to all foe")
         ).join(","); 
     }
 }

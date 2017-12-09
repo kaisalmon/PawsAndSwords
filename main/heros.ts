@@ -165,7 +165,7 @@ export class Hero extends Game.Choosable{
     }
 
     canUseAction(a: Cards.ActionCard){
-        if(this.justJoined || this.usedAction){
+        if(this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)){
             return false;
         }
         return a.effects[0].isValid(this, this);
@@ -242,6 +242,8 @@ export class Hero extends Game.Choosable{
         }
         let opacity = this.hasKeyword(Effects.Keyword.INVISIBLE) ? 0.7 : 1;
         this.$hero.css('opacity', opacity);
+        let transform = this.hasKeyword(Effects.Keyword.STAGGERED) ? "rotate(15deg)" : "none";
+        this.$hero.css('transform', transform);
     }
  
     getElem() : JQuery{
