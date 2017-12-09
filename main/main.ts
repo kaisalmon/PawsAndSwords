@@ -20,6 +20,11 @@ class GameRenderer{
                                  .hide()
                                  .appendTo('body');
 
+        this.$board.empty(); 
+        for(let z of this.game.zones){
+            z.getElem().appendTo(this.$board);
+        }
+
         this.onUpdate();
     }
     onUpdate():void{
@@ -38,10 +43,6 @@ class GameRenderer{
         this.$handB.empty();
         for(let c of this.game.partyB.hand){
             c.render().appendTo(this.$handB);
-        }
-        this.$board.empty(); 
-        for(let z of this.game.zones){
-            z.getElem().appendTo(this.$board);
         }
     } 
 }
@@ -75,10 +76,10 @@ let player_card_json = [
             ]} 
         ]} 
     ]},
-    {name:"Boar", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
+    {name:"Bear", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
         {type:"on_join", effects:[
-            {type:"attack", effects:[
-                {type:"damage", amount:"2"}
+            {type:"until_attacked", effects:[
+                {type:"staggered"}
             ]} 
         ]} 
     ]},

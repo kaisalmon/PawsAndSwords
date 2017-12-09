@@ -90,9 +90,11 @@ class ActionCard extends Card {
     }
     render() {
         var $card = super.render();
-        var descriptions = this.effects.map((e) => e.description());
-        var description = descriptions.join(", ").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
-        description = description.charAt(0).toUpperCase() + description.slice(1);
+        var descriptions = this.effects.map((e) => {
+            let descr = e.description();
+            return descr.charAt(0).toUpperCase() + descr.slice(1);
+        });
+        var description = descriptions.join(".<br/>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
     }
@@ -100,6 +102,7 @@ class ActionCard extends Card {
         return __awaiter(this, void 0, void 0, function* () {
             for (let e of this.effects) {
                 yield e.apply(hero, hero);
+                hero.getParty().onUpdate();
             }
             return new Promise(resolve => resolve());
         });
@@ -1064,7 +1067,8 @@ class Hero extends Game.Choosable {
         this.tempPassives.push(tempPassive);
     }
     render() {
-        this.$hero = $('<div/>').addClass('hero');
+        this.$hero = $('<div/>').addClass('wrapper--hero');
+        $('<div/>').addClass('hero').appendTo(this.$hero);
         this.rerender();
         return this.$hero;
     }
@@ -1072,9 +1076,10 @@ class Hero extends Game.Choosable {
         if (!this.$hero) {
             throw "Hero not rendered";
         }
-        this.$hero.empty();
-        $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo(this.$hero);
-        let $row = $('<div/>').addClass('hero__stats').appendTo(this.$hero);
+        var $inner = this.$hero.find('.hero');
+        $inner.empty();
+        $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo($inner);
+        let $row = $('<div/>').addClass('hero__stats').appendTo($inner);
         $('<div/>').addClass('hero__strength').appendTo($row).text(this.getStrength());
         $('<div/>').addClass('hero__arcana').appendTo($row).text(this.getArcana());
         let damaged = this.getHealth() < this.getMaxHealth();
@@ -1083,9 +1088,9 @@ class Hero extends Game.Choosable {
             $('<div/>').addClass('hero__armored').appendTo($row);
         }
         let opacity = this.hasKeyword(Effects.Keyword.INVISIBLE) ? 0.7 : 1;
-        this.$hero.css('opacity', opacity);
+        $inner.css('opacity', opacity);
         let transform = this.hasKeyword(Effects.Keyword.STAGGERED) ? "rotate(15deg)" : "none";
-        this.$hero.css('transform', transform);
+        $inner.css('transform', transform);
     }
     getElem() {
         if (this.$hero) {
@@ -1141,6 +1146,10 @@ class GameRenderer {
             .css('top', '0')
             .hide()
             .appendTo('body');
+        this.$board.empty();
+        for (let z of this.game.zones) {
+            z.getElem().appendTo(this.$board);
+        }
         this.onUpdate();
     }
     onUpdate() {
@@ -1160,10 +1169,6 @@ class GameRenderer {
         this.$handB.empty();
         for (let c of this.game.partyB.hand) {
             c.render().appendTo(this.$handB);
-        }
-        this.$board.empty();
-        for (let z of this.game.zones) {
-            z.getElem().appendTo(this.$board);
         }
     }
 }
@@ -1193,10 +1198,10 @@ let player_card_json = [
                         ] }
                 ] }
         ] },
-    { name: "Boar", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+    { name: "Bear", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_join", effects: [
-                    { type: "attack", effects: [
-                            { type: "damage", amount: "2" }
+                    { type: "until_attacked", effects: [
+                            { type: "staggered" }
                         ] }
                 ] }
         ] },

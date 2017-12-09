@@ -87,10 +87,12 @@ export class ActionCard extends Card{
     render(): JQuery{
         var $card = super.render();
         var descriptions: string[] = this.effects.map(
-            (e) => e.description()
+            (e) => {
+                let descr = e.description();
+                return descr.charAt(0).toUpperCase() + descr.slice(1)
+            }
         );
-        var description = descriptions.join(", ").replace(/%to target%/g,"to this hero").replace(/%target%/g,"this hero");
-        description = description.charAt(0).toUpperCase() + description.slice(1);
+        var description = descriptions.join(".<br/>").replace(/%to target%/g,"to this hero").replace(/%target%/g,"this hero");
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
     }
@@ -98,6 +100,7 @@ export class ActionCard extends Card{
     async apply(hero: Heros.Hero): Promise<{}>{
         for(let e of this.effects){
             await e.apply(hero, hero);
+            hero.getParty().onUpdate();
         }
         return new Promise<{}>(resolve=>resolve())
     }
