@@ -178,6 +178,9 @@ function parseEffects(json) {
         var effects = json_e.effects ? parseEffects(json_e.effects) : undefined;
         switch (json_e.type) {
             //Hero Effects
+            case "debug": {
+                return new he_Debug();
+            }
             case "damage": {
                 if (amount)
                     return new he_Damage(amount);
@@ -225,6 +228,9 @@ function parseEffects(json) {
             case "on_join": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_JOIN, "When %target% enters the arena");
             }
+            case "on_slain": {
+                return new hp_OnEvent(effects, Game.GameEvent.ON_SLAIN, "When %target% is slain");
+            }
             case "all_allies_have": {
                 return new hp_AllAlliesHave(effects);
             }
@@ -253,6 +259,23 @@ function parseEffects(json) {
     });
 }
 exports.parseEffects = parseEffects;
+class he_Debug extends HeroEffect {
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            alert("Debug!");
+            console.warn(this, user, target);
+            return new Promise(resolve => setTimeout(() => resolve(), 1000));
+        });
+    }
+    //is valid if the hero can move
+    isValid(user, target) {
+        return true;
+    }
+    description() {
+        return "PRINT DEBUG INFO FOR %target%";
+    }
+}
+exports.he_Debug = he_Debug;
 class he_Damage extends HeroEffect {
     constructor(amount) {
         super();
@@ -260,7 +283,7 @@ class he_Damage extends HeroEffect {
     }
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve) => {
+            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
                 let val = this.amount.val(user);
                 if (target.hasKeyword(Keyword.ARMORED)) {
                     val -= 1;
@@ -276,6 +299,10 @@ class he_Damage extends HeroEffect {
                             }
                             resolve();
                         }, 1000);
+                        console.log(target, target.getHealth());
+                        if (target.getHealth() <= 0) {
+                            yield target.slay();
+                        }
                     }
                     else {
                         resolve();
@@ -284,7 +311,7 @@ class he_Damage extends HeroEffect {
                 else {
                     resolve();
                 }
-            });
+            }));
         });
     }
     isValid(user, target) {
@@ -566,6 +593,7 @@ var GameEvent;
     GameEvent[GameEvent["ON_ATTACKED"] = 2] = "ON_ATTACKED";
     GameEvent[GameEvent["ON_ATTACKS"] = 3] = "ON_ATTACKS";
     GameEvent[GameEvent["ON_JOIN"] = 4] = "ON_JOIN";
+    GameEvent[GameEvent["ON_SLAIN"] = 5] = "ON_SLAIN";
 })(GameEvent = exports.GameEvent || (exports.GameEvent = {}));
 class Party {
     constructor(label, game, deck) {
@@ -912,6 +940,22 @@ class Hero extends Game.Choosable {
             return new Promise((resolve) => resolve());
         });
     }
+    slay() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.onTrigger(Game.GameEvent.ON_SLAIN);
+            this.zone.empty(this.getParty().label);
+            this.getParty().heros.splice(this.getParty().heros.indexOf(this), 1);
+            if (this.$hero) {
+                this.$hero.addClass('animated rotateOutDownLeft');
+                setTimeout(() => {
+                    if (this.$hero) {
+                        this.$hero.remove();
+                    }
+                }, 1000);
+            }
+            return new Promise((resolve) => resolve());
+        });
+    }
     getName() {
         if (this.classCard) {
             return this.raceCard.name + " " + this.classCard.name;
@@ -1178,12 +1222,10 @@ let player_card_json = [
                     { type: "move_random" }
                 ] }
         ] },
-    { name: "Thief", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 1, arcana: 0, health: 12, effects: [
-            { type: "on_join", effects: [
-                    { type: "until_attacks", effects: [
-                            { type: "invisible" },
-                            { type: "armored" },
-                        ] },
+    { name: "Thief", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 1, arcana: 0, health: 2, effects: [
+            { type: "on_slain", effects: [
+                    { type: "move_random" },
+                    { type: "debug" }
                 ] },
         ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
@@ -1210,6 +1252,11 @@ let player_card_json = [
                     { type: "until_attacks", effects: [
                             { type: "armored" },
                         ] }
+                ] },
+            { type: "on_slain", effects: [
+                    { type: "all_foes", effects: [
+                            { type: "damage", amount: "5" }
+                        ] }
                 ] }
         ] },
     { name: "Teleport", type: "spell", icon: "teleport", effects: [
@@ -1227,12 +1274,17 @@ let player_card_json = [
         ] },
     { name: "Smite", type: "spell", icon: "winged-sword", effects: [
             { type: "attack", effects: [
-                    { type: "damage", amount: "A + S" }
+                    { type: "damage", amount: "20" }
                 ] }
         ] },
     { name: "Smite", type: "spell", icon: "winged-sword", effects: [
             { type: "attack", effects: [
-                    { type: "damage", amount: "A + S" }
+                    { type: "damage", amount: "20" }
+                ] }
+        ] },
+    { name: "Smite", type: "spell", icon: "winged-sword", effects: [
+            { type: "attack", effects: [
+                    { type: "damage", amount: "20" }
                 ] }
         ] },
     { name: "Shockwave", type: "spell", icon: "winged-sword", effects: [

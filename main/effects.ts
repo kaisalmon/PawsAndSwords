@@ -35,6 +35,9 @@ export function parseEffects(json: any): Effect[]{
         var effects : Effect[] | undefined = json_e.effects ? parseEffects(json_e.effects) : undefined;
         switch(json_e.type){
             //Hero Effects
+            case "debug":{
+                return new he_Debug();
+            }
             case "damage":{
                 if(amount)
                     return new he_Damage(amount);
@@ -83,6 +86,9 @@ export function parseEffects(json: any): Effect[]{
             case "on_join":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_JOIN ,"When %target% enters the arena");
             }
+            case "on_slain":{
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_SLAIN ,"When %target% is slain");
+            }
             case "all_allies_have":{
                 return new hp_AllAlliesHave(effects as HeroPassive[]);
             }
@@ -110,7 +116,21 @@ export function parseEffects(json: any): Effect[]{
         }
     });
 }
+export class he_Debug extends HeroEffect{
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        alert("Debug!")
+        console.warn(this, user, target);
+        return new Promise<{}>(resolve=>setTimeout(()=>resolve(), 1000));
+    }
 
+    //is valid if the hero can move
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return true;
+    }
+    description(): string{
+        return "PRINT DEBUG INFO FOR %target%";
+    }
+}
 export class he_Damage extends HeroEffect{
     amount: Heros.Amount;
     
@@ -120,7 +140,7 @@ export class he_Damage extends HeroEffect{
     }
 
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
-        return new Promise((resolve)=>
+        return new Promise(async (resolve)=>
             {
                 let val = this.amount.val(user);
                 if(target.hasKeyword(Keyword.ARMORED)){
@@ -137,6 +157,10 @@ export class he_Damage extends HeroEffect{
                             }
                             resolve();
                         },1000)
+                        console.log(target,target.getHealth());
+                        if(target.getHealth() <= 0){
+                            await target.slay();
+                        }
                     }else{
                         resolve();     
                     }

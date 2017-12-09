@@ -54,12 +54,10 @@ let player_card_json = [
         ]} 
     ]},
 
-    {name:"Thief", type:"class","role":"warrior", icon:"diamond-hilt", strength:1, arcana:0, health:12, effects:[
-        {type:"on_join", effects:[
-            {type:"until_attacks", effects:[
-                {type:"invisible"}, 
-                {type:"armored"}, 
-            ]},
+    {name:"Thief", type:"class","role":"warrior", icon:"diamond-hilt", strength:1, arcana:0, health:2, effects:[
+        {type:"on_slain", effects:[
+            {type:"move_random"},
+            {type:"debug"} 
         ]},
     ]},
 
@@ -89,6 +87,11 @@ let player_card_json = [
             {type:"until_attacks", effects:[
                 {type:"armored"}, 
             ]} 
+        ]}, 
+        {type:"on_slain", effects:[
+            {type:"all_foes", effects:[
+                {type:"damage", amount:"5"}
+            ]} 
         ]} 
     ]},
 
@@ -111,13 +114,19 @@ let player_card_json = [
 
     {name:"Smite", type:"spell",icon:"winged-sword", effects:[
         {type:"attack", effects:[
-            {type:"damage", amount:"A + S"}
+            {type:"damage", amount:"20"}
         ]} 
     ]},
 
     {name:"Smite", type:"spell",icon:"winged-sword", effects:[
         {type:"attack", effects:[
-            {type:"damage", amount:"A + S"}
+            {type:"damage", amount:"20"}
+        ]} 
+    ]},
+
+    {name:"Smite", type:"spell",icon:"winged-sword", effects:[
+        {type:"attack", effects:[
+            {type:"damage", amount:"20"}
         ]} 
     ]},
 

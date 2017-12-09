@@ -32,7 +32,8 @@ export enum GameEvent{
     ON_TURN_END,
     ON_ATTACKED,
     ON_ATTACKS,
-    ON_JOIN
+    ON_JOIN,
+    ON_SLAIN
 }
 
 export abstract class Party{
