@@ -30,6 +30,7 @@ class ChoiceFailed extends Error {
 export enum GameEvent{
     ON_NEW_TURN,
     ON_ATTACKED,
+    ON_ATTACKS,
     ON_JOIN
 }
 

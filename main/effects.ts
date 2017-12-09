@@ -56,6 +56,9 @@ export function parseEffects(json: any): Effect[]{
             case "on_attacked":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKED ,"When %target% is attacked");
             }
+            case "on_attacks":{
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKS ,"When %target% makes an attack");
+            }
             case "on_join":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_JOIN ,"When %target% enters the arena");
             }
@@ -155,6 +158,7 @@ export class he_Attack extends HeroEffect{
             for(let e of this.effects){
                 await e.apply(user, foe);
             }
+            await target.onTrigger(Game.GameEvent.ON_ATTACKS)
             return new Promise((resolve)=>resolve());
         }
         throw new EffectFailed()

@@ -38,7 +38,11 @@ class GameRenderer{
 }
 
 let all_cards_json = [
-    {name:"Fighter", type:"class","role":"warrior", icon:"diamond-hilt", strength:2, arcana:0, health:12},
+    {name:"Fighter", type:"class","role":"warrior", icon:"diamond-hilt", strength:2, arcana:0, health:12, effects:[
+        {type:"on_attacks", effects:[
+            {type:"move_random"} 
+        ]} 
+    ]},
 
     {name:"Wizard", type:"class","role":"mage", icon:"pointy-hat", strength:0, arcana:2, health:8},
 
@@ -76,6 +80,11 @@ let all_cards_json = [
         ]} 
     ]},
 
+    {name:"Smite", type:"spell",icon:"winged-sword", effects:[
+        {type:"attack", effects:[
+            {type:"damage", amount:"A + S"}
+        ]} 
+    ]},
     {name:"Smite", type:"spell",icon:"winged-sword", effects:[
         {type:"attack", effects:[
             {type:"damage", amount:"A + S"}

@@ -193,6 +193,9 @@ function parseEffects(json) {
             case "on_attacked": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_ATTACKED, "When %target% is attacked");
             }
+            case "on_attacks": {
+                return new hp_OnEvent(effects, Game.GameEvent.ON_ATTACKS, "When %target% makes an attack");
+            }
             case "on_join": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_JOIN, "When %target% enters the arena");
             }
@@ -280,6 +283,7 @@ class he_Attack extends HeroEffect {
                 for (let e of this.effects) {
                     yield e.apply(user, foe);
                 }
+                yield target.onTrigger(Game.GameEvent.ON_ATTACKS);
                 return new Promise((resolve) => resolve());
             }
             throw new EffectFailed();
@@ -441,7 +445,8 @@ var GameEvent;
 (function (GameEvent) {
     GameEvent[GameEvent["ON_NEW_TURN"] = 0] = "ON_NEW_TURN";
     GameEvent[GameEvent["ON_ATTACKED"] = 1] = "ON_ATTACKED";
-    GameEvent[GameEvent["ON_JOIN"] = 2] = "ON_JOIN";
+    GameEvent[GameEvent["ON_ATTACKS"] = 2] = "ON_ATTACKS";
+    GameEvent[GameEvent["ON_JOIN"] = 3] = "ON_JOIN";
 })(GameEvent = exports.GameEvent || (exports.GameEvent = {}));
 class Party {
     constructor(label, game, deck) {
@@ -951,7 +956,11 @@ class GameRenderer {
     }
 }
 let all_cards_json = [
-    { name: "Fighter", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 2, arcana: 0, health: 12 },
+    { name: "Fighter", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 2, arcana: 0, health: 12, effects: [
+            { type: "on_attacks", effects: [
+                    { type: "move_random" }
+                ] }
+        ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8 },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_attacked", effects: [
@@ -980,6 +989,11 @@ let all_cards_json = [
     { name: "Flaming Arrow", type: "spell", icon: "flaming-arrow", effects: [
             { type: "ranged_attack", effects: [
                     { type: "damage", amount: "A" }
+                ] }
+        ] },
+    { name: "Smite", type: "spell", icon: "winged-sword", effects: [
+            { type: "attack", effects: [
+                    { type: "damage", amount: "A + S" }
                 ] }
         ] },
     { name: "Smite", type: "spell", icon: "winged-sword", effects: [
