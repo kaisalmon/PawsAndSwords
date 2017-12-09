@@ -73,6 +73,9 @@ export abstract class Party{
         if(!this.playedHero && this.hand.some((c)=>c.type == Cards.CardType.CLASS)){
             r = r.concat(this.hand.filter((c)=>c.type == Cards.CardType.RACE));
         }
+        if(!this.playedHero){
+            r = r.concat(this.hand.filter((c)=>c.type == Cards.CardType.MONSTER));
+        }
 
         if(this.heros.length > 0){
             let usableActions = this.hand
@@ -125,17 +128,23 @@ export abstract class Party{
             let choice = await this.makeChoice(choices);
             if(choice instanceof Cards.HeroComponent){
                 let raceCard = choice;
-                raceCard.getElem().addClass('active')
-                let classCard = await this.makeChoice(
-                    this.hand.filter((c)=>c.type == Cards.CardType.CLASS)
-                ) as Cards.HeroComponent;
+                let h;
+                let zone;
+                if(choice.type != Cards.CardType.MONSTER){
+                    raceCard.getElem().addClass('active')
+                    let classCard = await this.makeChoice(
+                        this.hand.filter((c)=>c.type == Cards.CardType.CLASS)
+                    ) as Cards.HeroComponent;
 
-                classCard.getElem().addClass('active')
-                let zone: Zone = await this.makeChoice(this.getPlaceableZones());
-                this.discard(classCard);
+                    classCard.getElem().addClass('active')
+                    zone= await this.makeChoice(this.getPlaceableZones());
+                    this.discard(classCard);
+                    h = new Heros.Hero(raceCard, classCard, zone);
+                }else{
+                    zone = await this.makeChoice(this.getPlaceableZones());
+                    h = new Heros.Hero(raceCard, undefined, zone);
+                }
                 this.discard(raceCard);
-
-                let h = new Heros.Hero(raceCard, classCard, zone);
                 this.addHero(h);
                 await zone.addHero(this.game.activeId, h);
                 await h.onTrigger(GameEvent.ON_JOIN);
@@ -201,8 +210,8 @@ export class Game{
     zones: Zone[];
     activeId: 'a'|'b' = 'a';
     constructor(deckA:Cards.Card[], deckB:Cards.Card[]){
-        this.partyA = new UIParty('a', this, deckB);
-        this.partyB = new RandomParty('b', this, deckA);
+        this.partyA = new UIParty('a', this, deckA);
+        this.partyB = new RandomParty('b', this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
 

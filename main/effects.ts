@@ -4,7 +4,8 @@ import * as Game from "./game";
 export enum Keyword{
     ARMORED="Armored",
     INVISIBLE="Invisible",
-    STAGGERED="Staggered"
+    STAGGERED="Staggered",
+    UNDEAD="Undead"
 }
 
 export abstract class Effect {
@@ -93,6 +94,9 @@ export function parseEffects(json: any): Effect[]{
             }
             case "staggered":{
                 return new hp_Keyword(Keyword.STAGGERED);
+            }
+            case "undead":{
+                return new hp_Keyword(Keyword.UNDEAD);
             }
             case "while_damaged":{
                 return new hp_WhileCond(effects as HeroPassive[], (h)=>h.damage > 0, "while damaged");

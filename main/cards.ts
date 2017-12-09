@@ -6,6 +6,7 @@ import * as Game from "./game";
 export enum CardType {
     RACE = 'Race',
     CLASS = 'Class',
+    MONSTER = 'Monster',
     SPELL = 'Spell',
 }
 export enum Role {
@@ -15,10 +16,13 @@ export enum Role {
 }
 
 export function parseCard(json:any) : Card{
-    if(json.type == "class" || json.type == "race"){
+    if(json.type == "class" || json.type == "monster"|| json.type == "race"){
         let type : CardType = CardType.RACE;
         if(json.type == "class"){
             type = CardType.CLASS;
+        }
+        if(json.type == "monster"){
+            type = CardType.MONSTER;
         }
         let role:Role;
         switch(json.role) { 

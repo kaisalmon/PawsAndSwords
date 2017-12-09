@@ -17,6 +17,7 @@ class GameRenderer{
                                  .appendTo('body');
         this.$handB = $('<div/>').css('position', 'fixed')
                                  .css('top', '0')
+                                 .hide()
                                  .appendTo('body');
 
         this.onUpdate();
@@ -45,7 +46,7 @@ class GameRenderer{
     } 
 }
 
-let all_cards_json = [
+let player_card_json = [
     {name:"Fighter", type:"class","role":"warrior", icon:"diamond-hilt", strength:2, arcana:0, health:12, effects:[
         {type:"on_attacks", effects:[
             {type:"move_random"} 
@@ -131,14 +132,32 @@ let all_cards_json = [
     ]},
 ]
 
+let monster_card_json = [
+    {name:"Skeleton", type:"monster",icon:"person", strength:2, arcana:0, health:6, effects:[
+        {type:"undead"}, 
+    ]}, 
+    {name:"Goblin", type:"monster",icon:"person", strength:2, arcana:0, health:6, effects:[
+        {type:"on_join", effects:[
+            {type:"until_new_turn", effects:[
+                {type:"invisible"}
+            ]} 
+        ]} 
+    ]}, 
+]
+
 let deckA:Cards.Card[] = [];
 let deckB:Cards.Card[] = [];
 
-for(let card_json of all_cards_json){
+for(let card_json of player_card_json){
     let c = Cards.parseCard(card_json);
     deckA.push(c);
-    c = Cards.parseCard(card_json);
-    deckB.push(c);
+}
+
+for(let card_json of monster_card_json){
+    for(var i = 0; i<3; i++){
+        let c = Cards.parseCard(card_json);
+        deckB.push(c);
+    }
 }
 
 let game = new Game.Game(deckA, deckB);

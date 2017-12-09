@@ -21,7 +21,7 @@ export class TempPassive{
 }
 
 export class Hero extends Game.Choosable{
-    classCard: Cards.HeroComponent; 
+    classCard: Cards.HeroComponent|undefined; 
     raceCard: Cards.HeroComponent;
     damage: number;
     party: Game.Party;
@@ -34,7 +34,7 @@ export class Hero extends Game.Choosable{
 
     tempPassives: TempPassive[] = [];
 
-    constructor(raceCard: Cards.HeroComponent, classCard: Cards.HeroComponent, zone: Game.Zone){
+    constructor(raceCard: Cards.HeroComponent, classCard: Cards.HeroComponent|undefined, zone: Game.Zone){
         super();
         this.classCard = classCard;
         this.raceCard = raceCard;
@@ -83,22 +83,35 @@ export class Hero extends Game.Choosable{
     }
 
     getName() : string{
-        return this.raceCard.name+" "+this.classCard.name;
+        if(this.classCard){
+            return this.raceCard.name+" "+this.classCard.name;
+        }else{
+            return this.raceCard.name;
+        }
     }
     getStrength() : number{
-        return this.raceCard.strength + this.classCard.strength;
+        if(this.classCard){
+            return this.raceCard.strength + this.classCard.strength;
+        }else{
+            return this.raceCard.strength;
+        }
     }
     getArcana() : number{
-        return this.raceCard.arcana + this.classCard.arcana;
+        if(this.classCard){
+            return this.raceCard.arcana + this.classCard.arcana;
+        }else{
+            return this.raceCard.arcana;
+        }
     }
     getMaxHealth() : number{
-        return this.raceCard.health + this.classCard.health;
+        if(this.classCard){
+            return this.raceCard.health + this.classCard.health;
+        }else{
+            return this.raceCard.health;
+        }
     }
     getHealth() : number{
         return this.getMaxHealth() - this.damage;
-    }
-    getRoles() : Cards.Role[]{
-        return [this.classCard.role]
     }
     getParty() : Game.Party{
         if(this.party){
@@ -139,7 +152,10 @@ export class Hero extends Game.Choosable{
         }
 
         //Add passives from race and class
-        effects =  effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+        effects =  effects.concat(this.raceCard.effects);
+        if(this.classCard){
+            effects =  effects.concat(this.classCard.effects);
+        }
 
         //Map passives to ActivePassives (To resolve conditionals)
         let activePassives: Effects.HeroPassive[][] = effects.map((e)=>e.getActivePassives(this));

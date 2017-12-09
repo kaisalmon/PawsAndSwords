@@ -16,6 +16,7 @@ var CardType;
 (function (CardType) {
     CardType["RACE"] = "Race";
     CardType["CLASS"] = "Class";
+    CardType["MONSTER"] = "Monster";
     CardType["SPELL"] = "Spell";
 })(CardType = exports.CardType || (exports.CardType = {}));
 var Role;
@@ -25,10 +26,13 @@ var Role;
     Role["NO_ROLE"] = "none";
 })(Role = exports.Role || (exports.Role = {}));
 function parseCard(json) {
-    if (json.type == "class" || json.type == "race") {
+    if (json.type == "class" || json.type == "monster" || json.type == "race") {
         let type = CardType.RACE;
         if (json.type == "class") {
             type = CardType.CLASS;
+        }
+        if (json.type == "monster") {
+            type = CardType.MONSTER;
         }
         let role;
         switch (json.role) {
@@ -144,6 +148,7 @@ var Keyword;
     Keyword["ARMORED"] = "Armored";
     Keyword["INVISIBLE"] = "Invisible";
     Keyword["STAGGERED"] = "Staggered";
+    Keyword["UNDEAD"] = "Undead";
 })(Keyword = exports.Keyword || (exports.Keyword = {}));
 class Effect {
 }
@@ -228,6 +233,9 @@ function parseEffects(json) {
             }
             case "staggered": {
                 return new hp_Keyword(Keyword.STAGGERED);
+            }
+            case "undead": {
+                return new hp_Keyword(Keyword.UNDEAD);
             }
             case "while_damaged": {
                 return new hp_WhileCond(effects, (h) => h.damage > 0, "while damaged");
@@ -586,6 +594,9 @@ class Party {
         if (!this.playedHero && this.hand.some((c) => c.type == Cards.CardType.CLASS)) {
             r = r.concat(this.hand.filter((c) => c.type == Cards.CardType.RACE));
         }
+        if (!this.playedHero) {
+            r = r.concat(this.hand.filter((c) => c.type == Cards.CardType.MONSTER));
+        }
         if (this.heros.length > 0) {
             let usableActions = this.hand
                 .filter((c) => {
@@ -637,13 +648,21 @@ class Party {
                 let choice = yield this.makeChoice(choices);
                 if (choice instanceof Cards.HeroComponent) {
                     let raceCard = choice;
-                    raceCard.getElem().addClass('active');
-                    let classCard = yield this.makeChoice(this.hand.filter((c) => c.type == Cards.CardType.CLASS));
-                    classCard.getElem().addClass('active');
-                    let zone = yield this.makeChoice(this.getPlaceableZones());
-                    this.discard(classCard);
+                    let h;
+                    let zone;
+                    if (choice.type != Cards.CardType.MONSTER) {
+                        raceCard.getElem().addClass('active');
+                        let classCard = yield this.makeChoice(this.hand.filter((c) => c.type == Cards.CardType.CLASS));
+                        classCard.getElem().addClass('active');
+                        zone = yield this.makeChoice(this.getPlaceableZones());
+                        this.discard(classCard);
+                        h = new Heros.Hero(raceCard, classCard, zone);
+                    }
+                    else {
+                        zone = yield this.makeChoice(this.getPlaceableZones());
+                        h = new Heros.Hero(raceCard, undefined, zone);
+                    }
                     this.discard(raceCard);
-                    let h = new Heros.Hero(raceCard, classCard, zone);
                     this.addHero(h);
                     yield zone.addHero(this.game.activeId, h);
                     yield h.onTrigger(GameEvent.ON_JOIN);
@@ -710,8 +729,8 @@ exports.RandomParty = RandomParty;
 class Game {
     constructor(deckA, deckB) {
         this.activeId = 'a';
-        this.partyA = new UIParty('a', this, deckB);
-        this.partyB = new RandomParty('b', this, deckA);
+        this.partyA = new UIParty('a', this, deckA);
+        this.partyB = new RandomParty('b', this, deckB);
         this.partyA.opponent = this.partyB;
         this.partyB.opponent = this.partyA;
         this.zones = [new Zone(), new Zone(true), new Zone()]; //3 zones, with center zone marked
@@ -891,22 +910,39 @@ class Hero extends Game.Choosable {
         });
     }
     getName() {
-        return this.raceCard.name + " " + this.classCard.name;
+        if (this.classCard) {
+            return this.raceCard.name + " " + this.classCard.name;
+        }
+        else {
+            return this.raceCard.name;
+        }
     }
     getStrength() {
-        return this.raceCard.strength + this.classCard.strength;
+        if (this.classCard) {
+            return this.raceCard.strength + this.classCard.strength;
+        }
+        else {
+            return this.raceCard.strength;
+        }
     }
     getArcana() {
-        return this.raceCard.arcana + this.classCard.arcana;
+        if (this.classCard) {
+            return this.raceCard.arcana + this.classCard.arcana;
+        }
+        else {
+            return this.raceCard.arcana;
+        }
     }
     getMaxHealth() {
-        return this.raceCard.health + this.classCard.health;
+        if (this.classCard) {
+            return this.raceCard.health + this.classCard.health;
+        }
+        else {
+            return this.raceCard.health;
+        }
     }
     getHealth() {
         return this.getMaxHealth() - this.damage;
-    }
-    getRoles() {
-        return [this.classCard.role];
     }
     getParty() {
         if (this.party) {
@@ -941,7 +977,10 @@ class Hero extends Game.Choosable {
             effects = effects.concat(tp.effects);
         }
         //Add passives from race and class
-        effects = effects.concat(this.raceCard.effects).concat(this.classCard.effects);
+        effects = effects.concat(this.raceCard.effects);
+        if (this.classCard) {
+            effects = effects.concat(this.classCard.effects);
+        }
         //Map passives to ActivePassives (To resolve conditionals)
         let activePassives = effects.map((e) => e.getActivePassives(this));
         effects = activePassives.reduce((arr, e) => arr.concat(e), []);
@@ -1100,6 +1139,7 @@ class GameRenderer {
             .appendTo('body');
         this.$handB = $('<div/>').css('position', 'fixed')
             .css('top', '0')
+            .hide()
             .appendTo('body');
         this.onUpdate();
     }
@@ -1127,7 +1167,7 @@ class GameRenderer {
         }
     }
 }
-let all_cards_json = [
+let player_card_json = [
     { name: "Fighter", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 2, arcana: 0, health: 12, effects: [
             { type: "on_attacks", effects: [
                     { type: "move_random" }
@@ -1201,13 +1241,29 @@ let all_cards_json = [
                 ] }
         ] },
 ];
+let monster_card_json = [
+    { name: "Skeleton", type: "monster", icon: "person", strength: 2, arcana: 0, health: 6, effects: [
+            { type: "undead" },
+        ] },
+    { name: "Goblin", type: "monster", icon: "person", strength: 2, arcana: 0, health: 6, effects: [
+            { type: "on_join", effects: [
+                    { type: "until_new_turn", effects: [
+                            { type: "invisible" }
+                        ] }
+                ] }
+        ] },
+];
 let deckA = [];
 let deckB = [];
-for (let card_json of all_cards_json) {
+for (let card_json of player_card_json) {
     let c = Cards.parseCard(card_json);
     deckA.push(c);
-    c = Cards.parseCard(card_json);
-    deckB.push(c);
+}
+for (let card_json of monster_card_json) {
+    for (var i = 0; i < 3; i++) {
+        let c = Cards.parseCard(card_json);
+        deckB.push(c);
+    }
 }
 let game = new Game.Game(deckA, deckB);
 let render = new GameRenderer(game);
