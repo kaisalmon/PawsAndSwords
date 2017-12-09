@@ -54,7 +54,7 @@ let all_cards_json = [
 
     {name:"Wizard", type:"class","role":"mage", icon:"pointy-hat", strength:0, arcana:2, health:8, effects:[
         {type:"all_allies_have", effects:[
-            {type:"armored"}, 
+            {type:"invisible"}, 
         ]} 
     ]}, 
 

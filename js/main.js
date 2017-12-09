@@ -142,6 +142,7 @@ const Game = require("./game");
 var Keyword;
 (function (Keyword) {
     Keyword["ARMORED"] = "Armored";
+    Keyword["INVISIBLE"] = "Invisible";
 })(Keyword = exports.Keyword || (exports.Keyword = {}));
 class Effect {
 }
@@ -209,6 +210,9 @@ function parseEffects(json) {
             case "armored": {
                 return new hp_Keyword(Keyword.ARMORED);
             }
+            case "invisible": {
+                return new hp_Keyword(Keyword.INVISIBLE);
+            }
             default: {
                 throw "Unknown effect " + json_e.type;
             }
@@ -269,9 +273,7 @@ class he_AllFoes extends HeroEffect {
             foes = target.getParty().getOpponent().heros;
             for (let f of foes) {
                 for (let e of this.effects) {
-                    alert("doing");
                     yield e.apply(user, f);
-                    alert("done");
                 }
             }
             return new Promise((resolve) => resolve());
@@ -293,11 +295,11 @@ class he_Attack extends HeroEffect {
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
             let foe = target.getMeleeFoe();
-            if (foe) {
+            if (foe && !foe.hasKeyword(Keyword.INVISIBLE)) {
                 yield foe.onTrigger(Game.GameEvent.ON_ATTACKED);
                 // In case the melee target has changed
                 foe = target.getMeleeFoe();
-                if (!foe) {
+                if (!foe || foe.hasKeyword(Keyword.INVISIBLE)) {
                     throw new EffectFailed();
                 }
                 for (let e of this.effects) {
@@ -312,7 +314,7 @@ class he_Attack extends HeroEffect {
     //If the target has a foe in melee range, and that foe is a valid target for the first effect
     isValid(user, target) {
         var foe = target.getMeleeFoe();
-        if (!foe) {
+        if (!foe || foe.hasKeyword(Keyword.INVISIBLE)) {
             return false;
         }
         return this.effects[0].isValid(user, foe);
@@ -329,7 +331,7 @@ class he_RangedAttack extends HeroEffect {
     }
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
-            let foes = target.getParty().getOpponent().heros;
+            let foes = target.getParty().getOpponent().heros.filter((f) => !f.hasKeyword(Keyword.INVISIBLE));
             let foe = yield target.getParty().makeChoice(foes, '--red');
             if (foe) {
                 for (let e of this.effects) {
@@ -342,7 +344,9 @@ class he_RangedAttack extends HeroEffect {
     }
     //Is valid as long as at least one foe is a valid target for the first effect
     isValid(user, target) {
-        return target.getParty().getOpponent().heros.some((h) => this.effects[0].isValid(user, target));
+        return target.getParty().getOpponent().heros
+            .filter((f) => !f.hasKeyword(Keyword.INVISIBLE))
+            .some((h) => this.effects[0].isValid(user, target));
     }
     description() {
         return this.effects.map((e) => '<b>Ranged Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
@@ -946,6 +950,8 @@ class Hero extends Game.Choosable {
         if (this.hasKeyword(Effects.Keyword.ARMORED)) {
             $('<div/>').addClass('hero__armored').appendTo($row);
         }
+        let opacity = this.hasKeyword(Effects.Keyword.INVISIBLE) ? 0.7 : 1;
+        this.$hero.css('opacity', opacity);
     }
     getElem() {
         if (this.$hero) {
@@ -1034,7 +1040,7 @@ let all_cards_json = [
         ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
             { type: "all_allies_have", effects: [
-                    { type: "armored" },
+                    { type: "invisible" },
                 ] }
         ] },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [

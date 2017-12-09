@@ -207,8 +207,10 @@ export class Hero extends Game.Choosable{
         if(this.hasKeyword(Effects.Keyword.ARMORED)){
             $('<div/>').addClass('hero__armored').appendTo($row)
         }
- 
+        let opacity = this.hasKeyword(Effects.Keyword.INVISIBLE) ? 0.7 : 1;
+        this.$hero.css('opacity', opacity);
     }
+ 
     getElem() : JQuery{
         if(this.$hero){
             return this.$hero;

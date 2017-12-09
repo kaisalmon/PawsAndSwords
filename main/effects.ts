@@ -2,7 +2,8 @@ import * as Heros from "./heros";
 import * as Game from "./game";
 
 export enum Keyword{
-    ARMORED="Armored"
+    ARMORED="Armored",
+    INVISIBLE="Invisible"
 }
 
 export abstract class Effect {
@@ -71,6 +72,9 @@ export function parseEffects(json: any): Effect[]{
             }
             case "armored":{
                 return new hp_Keyword(Keyword.ARMORED);
+            }
+            case "invisible":{
+                return new hp_Keyword(Keyword.INVISIBLE);
             }
             default:{
                 throw "Unknown effect "+json_e.type;
@@ -164,12 +168,12 @@ export class he_Attack extends HeroEffect{
 
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
         let foe = target.getMeleeFoe()
-        if(foe){
+        if(foe && !foe.hasKeyword(Keyword.INVISIBLE)){
             await foe.onTrigger(Game.GameEvent.ON_ATTACKED)
             
             // In case the melee target has changed
             foe = target.getMeleeFoe()
-            if(!foe){
+            if(!foe || foe.hasKeyword(Keyword.INVISIBLE)){
                 throw new EffectFailed();
             }
             for(let e of this.effects){
@@ -184,7 +188,7 @@ export class he_Attack extends HeroEffect{
     //If the target has a foe in melee range, and that foe is a valid target for the first effect
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         var foe = target.getMeleeFoe();
-        if(!foe){
+        if(!foe || foe.hasKeyword(Keyword.INVISIBLE)){
             return false
         }
         return this.effects[0].isValid(user, foe);
@@ -206,7 +210,7 @@ class he_RangedAttack extends HeroEffect{
     }
 
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
-        let foes = target.getParty().getOpponent().heros;
+        let foes = target.getParty().getOpponent().heros.filter((f)=>!f.hasKeyword(Keyword.INVISIBLE));
         let foe = await target.getParty().makeChoice(foes, '--red'); 
         if(foe){
             for(let e of this.effects){
@@ -219,7 +223,9 @@ class he_RangedAttack extends HeroEffect{
 
     //Is valid as long as at least one foe is a valid target for the first effect
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
-        return target.getParty().getOpponent().heros.some((h)=>this.effects[0].isValid(user, target));
+        return target.getParty().getOpponent().heros
+            .filter((f)=>!f.hasKeyword(Keyword.INVISIBLE)) 
+            .some((h)=>this.effects[0].isValid(user, target));
     }
 
     description(): string{
