@@ -20,6 +20,29 @@ export class TempPassive{
     }
 }
 
+export class BuiltInAction extends Game.Choosable{
+    effects: Effects.HeroEffect[];
+    icon: string;
+    hero: Hero;
+    $button: JQuery|undefined;
+   
+    constructor(hero: Hero, effects: Effects.HeroEffect[], icon: string){
+        super();
+        this.effects = effects;
+        this.icon = icon;
+        this.hero = hero;
+    }
+
+    getElem(): JQuery{
+        if(this.$button === undefined){
+            this.$button = $('<div/>').addClass('hero__action');
+            let url = "https://kaisalmon.com/cardgame/include/loadImage.php?icon="+this.icon;
+            $('<img/>').attr('src',url).appendTo(this.$button);
+        }
+        return this.$button; 
+    }
+}
+
 export class Hero extends Game.Choosable{
     classCard: Cards.HeroComponent; 
     raceCard: Cards.HeroComponent;
@@ -28,11 +51,15 @@ export class Hero extends Game.Choosable{
     $hero: JQuery | undefined;
     zone: Game.Zone;
 
+
     //status flags
     usedAction: boolean = false;
     justJoined: boolean = true;
 
     tempPassives: TempPassive[] = [];
+
+    //action cache, while actions are locked
+    cached_builtInActions: BuiltInAction[]|undefined;
 
     constructor(raceCard: Cards.HeroComponent, classCard: Cards.HeroComponent, zone: Game.Zone){
         super();
@@ -179,9 +206,39 @@ export class Hero extends Game.Choosable{
     getAllies(): Hero[]{
         return this.getParty().heros.filter((h)=>h!==this);
     }
+    getBuiltInActions(): BuiltInAction[]{
+        if(!this.getParty().lockActions || this.cached_builtInActions == undefined){
+            let actions: BuiltInAction[] = [];
 
-    canUseAction(a: Cards.ActionCard){
-        if(this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)){
+            //Default Attack
+            actions.push(
+                new BuiltInAction(this, [
+                    new Effects.he_Attack([
+                        new Effects.he_Damage(new Amount("S"))
+                    ])
+                ],"crossed-swords")
+            )
+
+            //Default Move
+            actions.push(
+                new BuiltInAction(this, [
+                    new Effects.he_Move()
+                ],"back-forth")
+            )
+            this.cached_builtInActions = actions;
+        }
+        return this.cached_builtInActions;
+    }
+
+
+    canUseActions(): boolean{
+        if(this.getHealth() <= 0 || this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)){
+            return false;
+        }
+        return true;
+    }
+    canUseAction(a: Cards.ActionCard): boolean{
+        if(!this.canUseActions()){
             return false;
         }
         return a.effects[0].isValid(this, this);
@@ -249,12 +306,16 @@ export class Hero extends Game.Choosable{
         } 
         var $inner = this.$hero.find('.hero');
         $inner.empty();
+
+        //Stats and Name
         $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo($inner);
         let $row = $('<div/>').addClass('hero__stats').appendTo($inner);
         $('<div/>').addClass('hero__strength').appendTo($row).text(this.getStrength())
         $('<div/>').addClass('hero__arcana').appendTo($row).text(this.getArcana())
         let damaged = this.getHealth() < this.getMaxHealth();
         $('<div/>').addClass('hero__health').appendTo($row).text(this.getHealth()).addClass(damaged ? "hero__health--damaged" : "")
+
+        //Keywords
         if(this.hasKeyword(Effects.Keyword.ARMORED)){
             $('<div/>').addClass('hero__armored').appendTo($row)
         }
@@ -262,6 +323,12 @@ export class Hero extends Game.Choosable{
         $inner.css('opacity', opacity);
         let transform = this.hasKeyword(Effects.Keyword.STAGGERED) ? "rotate(15deg)" : "none";
         $inner.css('transform', transform);
+
+        //Builtin Actions
+        let $actions = $('<div/>').addClass('hero__action-wrapper').appendTo($inner);
+        for(let action of this.getBuiltInActions()){
+            action.getElem().appendTo($actions);
+        }
     }
  
     getElem() : JQuery{

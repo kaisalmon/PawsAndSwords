@@ -125,6 +125,26 @@
   &.active{
     transform: scale(1.2);
   }
+
+  $action_r: 80px;
+  &__action-wrapper{
+    height: $action_r;
+    position: absolute;
+    bottom: -$action_r - 10px;
+    justify-content: space-around;
+    left: 0;
+    right: 0;
+    display: flex;
+  }
+  &__action{ 
+    margin-right:5px;
+    margin-left:5px;
+    img{
+        filter: invert(100%);
+        height: $action_r;
+        width: $action_r;
+    }
+  }
 }
 
 

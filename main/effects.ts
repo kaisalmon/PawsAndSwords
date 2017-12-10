@@ -70,6 +70,9 @@ export function parseEffects(json: any): Effect[]{
             }
 
             //Hero Passives
+            case "action":{
+                return new hp_Action(effects as HeroEffect[]);
+            }
             case "on_new_turn":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_NEW_TURN ,"At the start of each turn");
             }
@@ -147,16 +150,15 @@ export class he_Damage extends HeroEffect{
                     if(target.$hero){
                         target.$hero.addClass('animated shake')
                         target.rerender();
+                        if(target.getHealth() <= 0){
+                            await target.slay();
+                        }  
                         setTimeout(()=>{
                             if(target.$hero){
                                 target.$hero.removeClass('shake');
                             }
                             resolve();
                         },1000)
-                        console.log(target,target.getHealth());
-                        if(target.getHealth() <= 0){
-                            await target.slay();
-                        }
                     }else{
                         resolve();     
                     }
