@@ -20,12 +20,12 @@ export abstract class Choosable{
         super("Choice Cancelled");
      }
 }
+*/
 class ChoiceFailed extends Error {
      constructor() {
         super("Choice Failed");
      }
 }
-*/
 
 export enum GameEvent{
     ON_NEW_TURN,
@@ -45,6 +45,7 @@ export abstract class Party{
     label: 'a'|'b';
 
     playedHero: boolean = false;
+    lockActions = false;
 
     onUpdate: ()=>void;
    
@@ -85,9 +86,18 @@ export abstract class Party{
                         return this.heros.some((h)=>h.canUseAction(c)); 
                     }
                     return false;
-                });
+            });
             r = r.concat(usableActions);
         }
+
+        for(let hero of this.heros){
+            if(hero.canUseActions()){
+                r = r.concat(hero.getBuiltInActions().filter(
+                    (action)=>action.effects[0].isValid(hero, hero)
+                ));
+            }
+        }
+
         return r;
     }
 
@@ -122,11 +132,17 @@ export abstract class Party{
     async playTurn() : Promise<{}>{
         this.onUpdate();
         await this.onNewTurn()
-        this.onUpdate();
         let choices:Choosable[];
         while((choices = this.getPossibleActions()).length > 0){
             choices.map((c)=>c.getElem().removeClass('active'))
+
+            //Ensure all graphics are updated before we request choices, so that 
+            //All highlighted elements exists
+            this.lockActions = true;
+            this.onUpdate();
             let choice = await this.makeChoice(choices);
+            this.lockActions = false;
+
             if(choice instanceof Cards.HeroComponent){
                 let raceCard = choice;
                 let h;
@@ -151,12 +167,28 @@ export abstract class Party{
                 await h.onTrigger(GameEvent.ON_JOIN);
             }else if(choice instanceof Cards.ActionCard){
                 let action = choice;
-                choice.getElem().addClass('active');
-                let users = this.heros
-                                .filter((h)=>h.canUseAction(action));
-                let user = await this.makeChoice(users);
-                await user.useAction(action)
-                this.discard(action);
+                try{
+                    choice.getElem().addClass('active');
+                    let users = this.heros
+                                    .filter((h)=>h.canUseAction(action));
+                    let user = await this.makeChoice(users);
+                    await user.useAction(action)
+                }catch(e){
+                    console.error(e);     
+                }finally{
+                    this.discard(action);
+                }
+            }else if(choice instanceof Heros.BuiltInAction){
+                let effects = choice.effects;
+                let hero = choice.hero;
+                for(let e of effects){
+                    await e.apply(hero, hero);
+                    hero.getParty().onUpdate();
+                }
+                hero.usedAction = true;
+            }else{
+                console.error("Choice:",choice,"not supported");
+                break;
             }
             this.onUpdate();
         }
@@ -179,12 +211,12 @@ export abstract class Party{
 export class UIParty extends Party{
     async makeChoice<T extends Choosable>(options:T[], highlightClass?:string|undefined): Promise<T>{
         if(options.length == 0){
-            return new Promise<T>((resolve, reject) => reject())
+            throw new ChoiceFailed()
         }
         for(let c of options){
             c.highlight(highlightClass||""); 
         }
-        let p = new Promise<T>((resolve, reject)=>{
+        let p = new Promise<T>((resolve)=>{
             for(let c of options){
                 c.getElem().click(function(c: T){
                     resolve(c)

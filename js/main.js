@@ -213,6 +213,9 @@ function parseEffects(json) {
                 return new he_UntilEvent(effects, Game.GameEvent.ON_ATTACKS, "until after their next attack");
             }
             //Hero Passives
+            case "action": {
+                return new hp_Action(effects);
+            }
             case "on_new_turn": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_NEW_TURN, "At the start of each turn");
             }
@@ -293,16 +296,15 @@ class he_Damage extends HeroEffect {
                     if (target.$hero) {
                         target.$hero.addClass('animated shake');
                         target.rerender();
+                        if (target.getHealth() <= 0) {
+                            yield target.slay();
+                        }
                         setTimeout(() => {
                             if (target.$hero) {
                                 target.$hero.removeClass('shake');
                             }
                             resolve();
                         }, 1000);
-                        console.log(target, target.getHealth());
-                        if (target.getHealth() <= 0) {
-                            yield target.slay();
-                        }
                     }
                     else {
                         resolve();
@@ -580,12 +582,12 @@ exports.Choosable = Choosable;
         super("Choice Cancelled");
      }
 }
-class ChoiceFailed extends Error {
-     constructor() {
-        super("Choice Failed");
-     }
-}
 */
+class ChoiceFailed extends Error {
+    constructor() {
+        super("Choice Failed");
+    }
+}
 var GameEvent;
 (function (GameEvent) {
     GameEvent[GameEvent["ON_NEW_TURN"] = 0] = "ON_NEW_TURN";
@@ -602,6 +604,7 @@ class Party {
         this.hand = [];
         this.heros = [];
         this.playedHero = false;
+        this.lockActions = false;
         this.label = label;
         this.game = game;
         this.deck = deck;
@@ -638,6 +641,11 @@ class Party {
             });
             r = r.concat(usableActions);
         }
+        for (let hero of this.heros) {
+            if (hero.canUseActions()) {
+                r = r.concat(hero.getBuiltInActions().filter((action) => action.effects[0].isValid(hero, hero)));
+            }
+        }
         return r;
     }
     getPlaceableZones() {
@@ -672,11 +680,15 @@ class Party {
         return __awaiter(this, void 0, void 0, function* () {
             this.onUpdate();
             yield this.onNewTurn();
-            this.onUpdate();
             let choices;
             while ((choices = this.getPossibleActions()).length > 0) {
                 choices.map((c) => c.getElem().removeClass('active'));
+                //Ensure all graphics are updated before we request choices, so that 
+                //All highlighted elements exists
+                this.lockActions = true;
+                this.onUpdate();
                 let choice = yield this.makeChoice(choices);
+                this.lockActions = false;
                 if (choice instanceof Cards.HeroComponent) {
                     let raceCard = choice;
                     let h;
@@ -700,12 +712,32 @@ class Party {
                 }
                 else if (choice instanceof Cards.ActionCard) {
                     let action = choice;
-                    choice.getElem().addClass('active');
-                    let users = this.heros
-                        .filter((h) => h.canUseAction(action));
-                    let user = yield this.makeChoice(users);
-                    yield user.useAction(action);
-                    this.discard(action);
+                    try {
+                        choice.getElem().addClass('active');
+                        let users = this.heros
+                            .filter((h) => h.canUseAction(action));
+                        let user = yield this.makeChoice(users);
+                        yield user.useAction(action);
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
+                    finally {
+                        this.discard(action);
+                    }
+                }
+                else if (choice instanceof Heros.BuiltInAction) {
+                    let effects = choice.effects;
+                    let hero = choice.hero;
+                    for (let e of effects) {
+                        yield e.apply(hero, hero);
+                        hero.getParty().onUpdate();
+                    }
+                    hero.usedAction = true;
+                }
+                else {
+                    console.error("Choice:", choice, "not supported");
+                    break;
                 }
                 this.onUpdate();
             }
@@ -727,12 +759,12 @@ class UIParty extends Party {
     makeChoice(options, highlightClass) {
         return __awaiter(this, void 0, void 0, function* () {
             if (options.length == 0) {
-                return new Promise((resolve, reject) => reject());
+                throw new ChoiceFailed();
             }
             for (let c of options) {
                 c.highlight(highlightClass || "");
             }
-            let p = new Promise((resolve, reject) => {
+            let p = new Promise((resolve) => {
                 for (let c of options) {
                     c.getElem().click(function (c) {
                         resolve(c);
@@ -885,6 +917,23 @@ class TempPassive {
     }
 }
 exports.TempPassive = TempPassive;
+class BuiltInAction extends Game.Choosable {
+    constructor(hero, effects, icon) {
+        super();
+        this.effects = effects;
+        this.icon = icon;
+        this.hero = hero;
+    }
+    getElem() {
+        if (this.$button === undefined) {
+            this.$button = $('<div/>').addClass('hero__action');
+            let url = "https://kaisalmon.com/cardgame/include/loadImage.php?icon=" + this.icon;
+            $('<img/>').attr('src', url).appendTo(this.$button);
+        }
+        return this.$button;
+    }
+}
+exports.BuiltInAction = BuiltInAction;
 class Hero extends Game.Choosable {
     constructor(raceCard, classCard, zone) {
         super();
@@ -1049,8 +1098,35 @@ class Hero extends Game.Choosable {
     getAllies() {
         return this.getParty().heros.filter((h) => h !== this);
     }
+    getBuiltInActions() {
+        if (!this.getParty().lockActions || this.cached_builtInActions == undefined) {
+            let actions = [];
+            //Default Attack
+            actions.push(new BuiltInAction(this, [
+                new Effects.he_Attack([
+                    new Effects.he_Damage(new Amount("S"))
+                ])
+            ], "crossed-swords"));
+            //Default Move
+            actions.push(new BuiltInAction(this, [
+                new Effects.he_Move()
+            ], "back-forth"));
+            let passives = this.getPassivesOfType(Effects.hp_Action);
+            for (let passive of passives) {
+                actions.push(new BuiltInAction(this, passive.effects, "stars-stack"));
+            }
+            this.cached_builtInActions = actions;
+        }
+        return this.cached_builtInActions;
+    }
+    canUseActions() {
+        if (this.getHealth() <= 0 || this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)) {
+            return false;
+        }
+        return true;
+    }
     canUseAction(a) {
-        if (this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)) {
+        if (!this.canUseActions()) {
             return false;
         }
         return a.effects[0].isValid(this, this);
@@ -1122,12 +1198,14 @@ class Hero extends Game.Choosable {
         }
         var $inner = this.$hero.find('.hero');
         $inner.empty();
+        //Stats and Name
         $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo($inner);
         let $row = $('<div/>').addClass('hero__stats').appendTo($inner);
         $('<div/>').addClass('hero__strength').appendTo($row).text(this.getStrength());
         $('<div/>').addClass('hero__arcana').appendTo($row).text(this.getArcana());
         let damaged = this.getHealth() < this.getMaxHealth();
         $('<div/>').addClass('hero__health').appendTo($row).text(this.getHealth()).addClass(damaged ? "hero__health--damaged" : "");
+        //Keywords
         if (this.hasKeyword(Effects.Keyword.ARMORED)) {
             $('<div/>').addClass('hero__armored').appendTo($row);
         }
@@ -1135,6 +1213,11 @@ class Hero extends Game.Choosable {
         $inner.css('opacity', opacity);
         let transform = this.hasKeyword(Effects.Keyword.STAGGERED) ? "rotate(15deg)" : "none";
         $inner.css('transform', transform);
+        //Builtin Actions
+        let $actions = $('<div/>').addClass('hero__action-wrapper').appendTo($inner);
+        for (let action of this.getBuiltInActions()) {
+            action.getElem().appendTo($actions);
+        }
     }
     getElem() {
         if (this.$hero) {
@@ -1223,14 +1306,19 @@ let player_card_json = [
                 ] }
         ] },
     { name: "Thief", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 1, arcana: 0, health: 2, effects: [
-            { type: "on_slain", effects: [
-                    { type: "move_random" },
-                    { type: "debug" }
+            { type: "action", effects: [
+                    { type: "until_attacks", effects: [
+                            { type: "invisible" }
+                        ] },
                 ] },
         ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
-            { type: "while_alone", effects: [
-                    { type: "invisible" },
+            { type: "all_allies_have", effects: [
+                    { type: "action", effects: [
+                            { type: "ranged_attack", effects: [
+                                    { type: "damage", amount: "3" },
+                                ] }
+                        ] }
                 ] }
         ] },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
