@@ -225,6 +225,15 @@ export class Hero extends Game.Choosable{
                     new Effects.he_Move()
                 ],"back-forth")
             )
+            
+            let passives = this.getPassivesOfType(Effects.hp_Action);
+            for(let passive of passives){
+                actions.push(
+                    new BuiltInAction(this, passive.effects, "stars-stack")
+                )
+            }
+
+
             this.cached_builtInActions = actions;
         }
         return this.cached_builtInActions;

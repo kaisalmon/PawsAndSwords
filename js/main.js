@@ -1072,6 +1072,10 @@ class Hero extends Game.Choosable {
             actions.push(new BuiltInAction(this, [
                 new Effects.he_Move()
             ], "back-forth"));
+            let passives = this.getPassivesOfType(Effects.hp_Action);
+            for (let passive of passives) {
+                actions.push(new BuiltInAction(this, passive.effects, "stars-stack"));
+            }
             this.cached_builtInActions = actions;
         }
         return this.cached_builtInActions;
@@ -1262,14 +1266,17 @@ let all_cards_json = [
                 ] }
         ] },
     { name: "Thief", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 1, arcana: 0, health: 2, effects: [
-            { type: "on_slain", effects: [
-                    { type: "move_random" },
-                    { type: "debug" }
+            { type: "action", effects: [
+                    { type: "until_attacks", effects: [
+                            { type: "invisible" }
+                        ] },
                 ] },
         ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
-            { type: "while_alone", effects: [
-                    { type: "invisible" },
+            { type: "action", effects: [
+                    { type: "ranged_attack", effects: [
+                            { type: "damage", amount: "3" },
+                        ] }
                 ] }
         ] },
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
