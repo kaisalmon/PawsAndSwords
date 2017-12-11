@@ -48,10 +48,10 @@ function parseCard(json) {
                 throw "Unknown role " + json.role;
             }
         }
-        return new HeroComponent(json.name, json.icon, type, role, json.strength, json.arcana, json.health, Effects.parseEffects(json.effects || []));
+        return new HeroComponent(json.name, json.icon, type, role, json.strength, json.arcana, json.health, Effects.parseEffects(json.effects || [], json.name, json.icon));
     }
     else if (json.type == "spell") {
-        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects));
+        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects, json.name, json.icon));
     }
     else {
         throw "Unknown card type " + json.type;
@@ -167,10 +167,19 @@ class EffectFailed extends Error {
     }
 }
 exports.EffectFailed = EffectFailed;
-function parseEffects(json) {
+function parseEffects(json, sourceName, sourceIcon) {
+    var effects = _parseEffects(json, sourceName, sourceIcon);
+    for (let e of effects) {
+        e.sourceName = sourceName;
+        e.sourceIcon = sourceIcon;
+    }
+    return effects;
+}
+exports.parseEffects = parseEffects;
+function _parseEffects(json, sourceName, sourceIcon) {
     return json.map((json_e) => {
         var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
-        var effects = json_e.effects ? parseEffects(json_e.effects) : undefined;
+        var effects = json_e.effects ? parseEffects(json_e.effects, sourceName, sourceIcon) : undefined;
         switch (json_e.type) {
             //Hero Effects
             case "debug": {
@@ -253,7 +262,6 @@ function parseEffects(json) {
         }
     });
 }
-exports.parseEffects = parseEffects;
 class he_Debug extends HeroEffect {
     apply(user, target) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -677,7 +685,15 @@ class Party {
                 //All highlighted elements exists
                 this.lockActions = true;
                 this.onUpdate();
+                for (let hero of this.heros) {
+                    if (hero.$hero)
+                        hero.$hero.addClass('hero--show-actions');
+                }
                 let choice = yield this.makeChoice(choices);
+                for (let hero of this.heros) {
+                    if (hero.$hero)
+                        hero.$hero.removeClass('hero--show-actions');
+                }
                 this.lockActions = false;
                 if (choice instanceof Cards.HeroComponent) {
                     let raceCard = choice;
@@ -1202,6 +1218,16 @@ class Hero extends Game.Choosable {
         for (let action of this.getBuiltInActions()) {
             action.getElem().appendTo($actions);
         }
+        //Status
+        let $status = $('<div/>').addClass('hero__status').appendTo($inner);
+        for (let p of this.getPassives()) {
+            let p_html = '%descr% <span class="hero__status__from">from <b>%src%</b></span>';
+            p_html = p_html.replace(/%descr%/g, p.description());
+            p_html = p_html.replace(/%src%/g, p.sourceName);
+            p_html = p_html.replace(/%target%/g, "");
+            p_html = p_html.replace(/%to target%/g, "");
+            $('<div/>').html(p_html).appendTo($status);
+        }
     }
     getElem() {
         if (this.$hero) {
@@ -1253,7 +1279,7 @@ class GameRenderer {
         this.$handA = $('<div/>').css('position', 'fixed')
             .css('bottom', '0')
             .appendTo('body');
-        this.$handB = $('<div/>').css('position', 'fixed')
+        this.$handB = $('<div/>').css('position', 'absolute')
             .css('top', '0')
             .appendTo('body');
         this.$board.empty();

@@ -345,6 +345,17 @@ export class Hero extends Game.Choosable{
         for(let action of this.getBuiltInActions()){
             action.getElem().appendTo($actions);
         }
+
+        //Status
+        let $status = $('<div/>').addClass('hero__status').appendTo($inner);
+        for(let p of this.getPassives()){
+            let p_html:string = '%descr% <span class="hero__status__from">from <b>%src%</b></span>';
+            p_html = p_html.replace(/%descr%/g, p.description());
+            p_html = p_html.replace(/%src%/g, p.sourceName);
+            p_html = p_html.replace(/%target%/g, "");
+            p_html = p_html.replace(/%to target%/g, "");
+            $('<div/>').html(p_html).appendTo($status);
+        }
     }
  
     getElem() : JQuery{

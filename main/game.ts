@@ -138,7 +138,16 @@ export abstract class Party{
             //All highlighted elements exists
             this.lockActions = true;
             this.onUpdate();
+            
+            for(let hero of this.heros){
+                if(hero.$hero)
+                    hero.$hero.addClass('hero--show-actions')
+            }
             let choice = await this.makeChoice(choices);
+            for(let hero of this.heros){
+                if(hero.$hero)
+                    hero.$hero.removeClass('hero--show-actions')
+            }
             this.lockActions = false;
 
             if(choice instanceof Cards.HeroComponent){

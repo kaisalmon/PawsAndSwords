@@ -40,9 +40,9 @@ export function parseCard(json:any) : Card{
         } 
         return new HeroComponent(json.name, json.icon, type, role,
                                  json.strength, json.arcana, json.health,
-                                 Effects.parseEffects(json.effects || []) as Effects.HeroPassive[]);
+                                 Effects.parseEffects(json.effects || [], json.name, json.icon) as Effects.HeroPassive[]);
     }else if(json.type == "spell"){
-        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects) as Effects.HeroEffect[]);
+        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects, json.name, json.icon) as Effects.HeroEffect[]);
 
     }else{
         throw "Unknown card type "+json.type;
