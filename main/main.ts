@@ -15,7 +15,7 @@ class GameRenderer{
         this.$handA = $('<div/>').css('position', 'fixed')
                                  .css('bottom', '0')
                                  .appendTo('body');
-        this.$handB = $('<div/>').css('position', 'fixed')
+        this.$handB = $('<div/>').css('position', 'absolute')
                                  .css('top', '0')
                                  .hide()
                                  .appendTo('body');

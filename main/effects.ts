@@ -9,6 +9,8 @@ export enum Keyword{
 }
 
 export abstract class Effect {
+    sourceIcon: string;
+    sourceName: string;
     abstract description(): string;
 }
 export abstract class HeroEffect extends Effect {
@@ -29,10 +31,19 @@ export class EffectFailed extends Error {
      }
 }
 
-export function parseEffects(json: any): Effect[]{
+export function parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[]{
+    var effects: Effect[] = _parseEffects(json, sourceName, sourceIcon);
+    for(let e of effects){
+        e.sourceName = sourceName;
+        e.sourceIcon = sourceIcon;
+    }
+    return effects;
+}
+
+function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[]{
     return json.map((json_e: any) => {
         var amount : Heros.Amount| undefined = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
-        var effects : Effect[] | undefined = json_e.effects ? parseEffects(json_e.effects) : undefined;
+        var effects : Effect[] | undefined = json_e.effects ? parseEffects(json_e.effects, sourceName, sourceIcon) : undefined;
         switch(json_e.type){
             //Hero Effects
             case "debug":{

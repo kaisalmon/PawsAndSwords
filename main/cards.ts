@@ -44,9 +44,9 @@ export function parseCard(json:any) : Card{
         } 
         return new HeroComponent(json.name, json.icon, type, role,
                                  json.strength, json.arcana, json.health,
-                                 Effects.parseEffects(json.effects || []) as Effects.HeroPassive[]);
+                                 Effects.parseEffects(json.effects || [], json.name, json.icon) as Effects.HeroPassive[]);
     }else if(json.type == "spell"){
-        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects) as Effects.HeroEffect[]);
+        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects, json.name, json.icon) as Effects.HeroEffect[]);
 
     }else{
         throw "Unknown card type "+json.type;
@@ -92,7 +92,7 @@ export class ActionCard extends Card{
                 return descr.charAt(0).toUpperCase() + descr.slice(1)
             }
         );
-        var description = descriptions.join(".<br/>").replace(/%to target%/g,"to this hero").replace(/%target%/g,"this hero");
+        var description = descriptions.join(". <br/>").replace(/%to target%/g,"to this hero").replace(/%target%/g,"this hero");
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
     }
@@ -129,7 +129,7 @@ export class HeroComponent extends Card{
         var descriptions: string[] = this.effects.map(
             (e) => e.description()
         );
-        var description = descriptions.join(", ").replace(/%to target%/g,"to this hero").replace(/%target%/g,"the "+this.name);
+        var description = descriptions.join(".<br>").replace(/%to target%/g,"to this hero").replace(/%target%/g,"the "+this.name);
         description = description.charAt(0).toUpperCase() + description.slice(1);
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
