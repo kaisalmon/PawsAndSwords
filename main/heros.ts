@@ -55,6 +55,7 @@ export class Hero extends Game.Choosable{
     //status flags
     usedAction: boolean = false;
     justJoined: boolean = true;
+    slain: boolean = false;
 
     tempPassives: TempPassive[] = [];
 
@@ -110,16 +111,19 @@ export class Hero extends Game.Choosable{
     }
 
     async slay() : Promise<{}>{
-        await this.onTrigger(Game.GameEvent.ON_SLAIN)
-        this.zone.empty(this.getParty().label)
-        this.getParty().heros.splice(this.getParty().heros.indexOf(this), 1);
-        if(this.$hero){
-            this.$hero.addClass('animated rotateOutDownLeft') 
-            setTimeout(()=>{
-                if(this.$hero){
-                    this.$hero.remove()
-                    }
-                }, 1000);
+        if(!this.slain){
+            this.slain = true;
+            await this.onTrigger(Game.GameEvent.ON_SLAIN)
+            this.zone.empty(this.getParty().label)
+            this.getParty().heros.splice(this.getParty().heros.indexOf(this), 1);
+            if(this.$hero){
+                this.$hero.addClass('animated rotateOutDownLeft') 
+                setTimeout(()=>{
+                    if(this.$hero){
+                        this.$hero.remove()
+                        }
+                    }, 1000);
+            }
         }
         return new Promise((resolve)=>resolve());
     }
@@ -241,7 +245,7 @@ export class Hero extends Game.Choosable{
 
 
     canUseActions(): boolean{
-        if(this.getHealth() <= 0 || this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)){
+        if(this.slain || this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)){
             return false;
         }
         return true;
@@ -268,6 +272,9 @@ export class Hero extends Game.Choosable{
         }
     }
     async moveZone(zone: Game.Zone) : Promise<{}>{
+        if(this.slain){
+            throw new Effects.EffectFailed();
+        }
         return new Promise((resolve)=>{
             let oldZone = this.zone;
             let ally = zone.getHero(this.getParty().label)

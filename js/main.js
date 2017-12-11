@@ -90,7 +90,7 @@ class ActionCard extends Card {
             let descr = e.description();
             return descr.charAt(0).toUpperCase() + descr.slice(1);
         });
-        var description = descriptions.join(".<br/>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
+        var description = descriptions.join(". <br/>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
     }
@@ -121,7 +121,7 @@ class HeroComponent extends Card {
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana);
         $('<div/>').addClass('card__health').appendTo($row).text(this.health);
         var descriptions = this.effects.map((e) => e.description());
-        var description = descriptions.join(", ").replace(/%to target%/g, "to this hero").replace(/%target%/g, "the " + this.name);
+        var description = descriptions.join(".<br>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "the " + this.name);
         description = description.charAt(0).toUpperCase() + description.slice(1);
         $('<div/>').addClass('card__description').appendTo($card).html(description);
         return $card;
@@ -556,6 +556,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Heros = require("./heros");
 const Cards = require("./cards");
+const Effects = require("./effects");
 const $ = require("jquery");
 class Choosable {
     highlight(highlightClass) {
@@ -701,7 +702,12 @@ class Party {
                         yield user.useAction(action);
                     }
                     catch (e) {
-                        console.error(e);
+                        if (e instanceof Effects.EffectFailed) {
+                            //Swallow Error
+                        }
+                        else {
+                            throw e;
+                        }
                     }
                     finally {
                         this.discard(action);
@@ -710,9 +716,19 @@ class Party {
                 else if (choice instanceof Heros.BuiltInAction) {
                     let effects = choice.effects;
                     let hero = choice.hero;
-                    for (let e of effects) {
-                        yield e.apply(hero, hero);
-                        hero.getParty().onUpdate();
+                    try {
+                        for (let e of effects) {
+                            yield e.apply(hero, hero);
+                            hero.getParty().onUpdate();
+                        }
+                    }
+                    catch (e) {
+                        if (e instanceof Effects.EffectFailed) {
+                            //Swallow Error
+                        }
+                        else {
+                            throw e;
+                        }
                     }
                     hero.usedAction = true;
                 }
@@ -870,7 +886,7 @@ class Zone extends Choosable {
 }
 exports.Zone = Zone;
 
-},{"./cards":1,"./heros":4,"jquery":6}],4:[function(require,module,exports){
+},{"./cards":1,"./effects":2,"./heros":4,"jquery":6}],4:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -921,6 +937,7 @@ class Hero extends Game.Choosable {
         //status flags
         this.usedAction = false;
         this.justJoined = true;
+        this.slain = false;
         this.tempPassives = [];
         this.classCard = classCard;
         this.raceCard = raceCard;
@@ -972,16 +989,19 @@ class Hero extends Game.Choosable {
     }
     slay() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.onTrigger(Game.GameEvent.ON_SLAIN);
-            this.zone.empty(this.getParty().label);
-            this.getParty().heros.splice(this.getParty().heros.indexOf(this), 1);
-            if (this.$hero) {
-                this.$hero.addClass('animated rotateOutDownLeft');
-                setTimeout(() => {
-                    if (this.$hero) {
-                        this.$hero.remove();
-                    }
-                }, 1000);
+            if (!this.slain) {
+                this.slain = true;
+                yield this.onTrigger(Game.GameEvent.ON_SLAIN);
+                this.zone.empty(this.getParty().label);
+                this.getParty().heros.splice(this.getParty().heros.indexOf(this), 1);
+                if (this.$hero) {
+                    this.$hero.addClass('animated rotateOutDownLeft');
+                    setTimeout(() => {
+                        if (this.$hero) {
+                            this.$hero.remove();
+                        }
+                    }, 1000);
+                }
             }
             return new Promise((resolve) => resolve());
         });
@@ -1081,7 +1101,7 @@ class Hero extends Game.Choosable {
         return this.cached_builtInActions;
     }
     canUseActions() {
-        if (this.getHealth() <= 0 || this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)) {
+        if (this.slain || this.justJoined || this.usedAction || this.hasKeyword(Effects.Keyword.STAGGERED)) {
             return false;
         }
         return true;
@@ -1112,6 +1132,9 @@ class Hero extends Game.Choosable {
     }
     moveZone(zone) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.slain) {
+                throw new Effects.EffectFailed();
+            }
             return new Promise((resolve) => {
                 let oldZone = this.zone;
                 let ally = zone.getHero(this.getParty().label);

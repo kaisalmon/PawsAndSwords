@@ -1,5 +1,6 @@
 import * as Heros from "./heros";
 import * as Cards from "./cards";
+import * as Effects from "./effects";
 import * as $ from "jquery";
 
 export abstract class Choosable{
@@ -165,16 +166,28 @@ export abstract class Party{
                     let user = await this.makeChoice(users);
                     await user.useAction(action)
                 }catch(e){
-                    console.error(e);     
+                    if(e instanceof Effects.EffectFailed){
+                        //Swallow Error
+                    }else{
+                        throw e;
+                    }
                 }finally{
                     this.discard(action);
                 }
             }else if(choice instanceof Heros.BuiltInAction){
                 let effects = choice.effects;
                 let hero = choice.hero;
-                for(let e of effects){
-                    await e.apply(hero, hero);
-                    hero.getParty().onUpdate();
+                try{
+                    for(let e of effects){
+                        await e.apply(hero, hero);
+                        hero.getParty().onUpdate();
+                    }
+                }catch(e){
+                    if(e instanceof Effects.EffectFailed){
+                        //Swallow Error
+                    }else{
+                        throw e;
+                    }
                 }
                 hero.usedAction = true;
             }else{
