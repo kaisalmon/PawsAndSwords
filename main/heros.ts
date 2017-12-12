@@ -75,16 +75,19 @@ export class Hero extends Game.Choosable{
         
         //Fire OnEvent passives
         let on_events = this.getPassivesOfType(Effects.hp_OnEvent).filter((hp)=>hp.trigger == trigger);
-        if(on_events.length >0){
-            if(this.$hero){
+        if(on_events.length > 0){
+            let any_valid = on_events.some((ov)=>ov.effects[0].isValid(this, this));
+            if(this.$hero && any_valid){
                 this.$hero.addClass('animated flash');
                 await sleep(1);
                 this.$hero.removeClass('animated flash');
             }
             for(let ov of on_events){
                 try{
-                    for(let e of ov.effects){
-                        await e.apply(this, this);
+                    if(ov.effects[0].isValid(this,this)){
+                        for(let e of ov.effects){
+                            await e.apply(this, this);
+                        }
                     }
                 }catch(e){
                     if(e instanceof Effects.EffectFailed){
