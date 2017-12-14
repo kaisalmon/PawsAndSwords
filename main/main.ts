@@ -16,6 +16,7 @@ class GameRenderer{
                                  .css('bottom', '0')
                                  .appendTo('body');
         this.$handB = $('<div/>').css('position', 'absolute')
+                                .addClass('hand--B')
                                  .css('top', '0')
                                  .appendTo('body');
 

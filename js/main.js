@@ -60,9 +60,13 @@ function parseCard(json) {
 exports.parseCard = parseCard;
 class Card extends Game.Choosable {
     render() {
+        if (this.$card) {
+            return this.$card;
+        }
         this.$card = $('<div/>').addClass('card--' + this.type).addClass('card');
         $('<div/>').addClass('card__titlebar').text(this.type + " - " + this.name).appendTo(this.$card);
         //$('<img/>').addClass('card__icon').appendTo($card).attr('src','http://kaisalmon.com/cardgame/include/loadImage.php?icon='+this.icon)
+        this.addDetails();
         return this.$card;
     }
     getElem() {
@@ -84,15 +88,16 @@ class ActionCard extends Card {
         super(name, icon, type);
         this.effects = effects;
     }
-    render() {
-        var $card = super.render();
+    addDetails() {
+        if (!this.$card)
+            return;
+        var $card = this.$card;
         var descriptions = this.effects.map((e) => {
             let descr = e.description();
             return descr.charAt(0).toUpperCase() + descr.slice(1);
         });
         var description = descriptions.join(". <br/>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
         $('<div/>').addClass('card__description').appendTo($card).html(description);
-        return $card;
     }
     apply(hero) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -114,8 +119,10 @@ class HeroComponent extends Card {
         this.health = health;
         this.effects = effects;
     }
-    render() {
-        var $card = super.render();
+    addDetails() {
+        if (!this.$card)
+            return;
+        var $card = this.$card;
         var $row = $('<div/>').addClass('card__stats').appendTo($card);
         $('<div/>').addClass('card__strength').appendTo($row).text(this.strength);
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana);
@@ -124,7 +131,6 @@ class HeroComponent extends Card {
         var description = descriptions.join(".<br>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "the " + this.name);
         description = description.charAt(0).toUpperCase() + description.slice(1);
         $('<div/>').addClass('card__description').appendTo($card).html(description);
-        return $card;
     }
 }
 exports.HeroComponent = HeroComponent;
@@ -566,6 +572,13 @@ const Heros = require("./heros");
 const Cards = require("./cards");
 const Effects = require("./effects");
 const $ = require("jquery");
+function sleep(seconds) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve();
+        }, seconds * 1000);
+    });
+}
 class Choosable {
     highlight(highlightClass) {
         this.getElem().addClass('choosable');
@@ -712,6 +725,7 @@ class Party {
                     let action = choice;
                     try {
                         choice.getElem().addClass('active');
+                        yield sleep(1);
                         let users = this.heros
                             .filter((h) => h.canUseAction(action));
                         let user = yield this.makeChoice(users);
@@ -1283,6 +1297,7 @@ class GameRenderer {
             .css('bottom', '0')
             .appendTo('body');
         this.$handB = $('<div/>').css('position', 'absolute')
+            .addClass('hand--B')
             .css('top', '0')
             .appendTo('body');
         this.$board.empty();

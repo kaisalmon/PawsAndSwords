@@ -3,6 +3,15 @@ import * as Cards from "./cards";
 import * as Effects from "./effects";
 import * as $ from "jquery";
 
+function sleep(seconds: number) { 
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, seconds*1000);
+  });
+}
+
+
 export abstract class Choosable{
     abstract getElem(): JQuery; 
     highlight(highlightClass: string) : void{
@@ -170,6 +179,7 @@ export abstract class Party{
                 let action = choice;
                 try{
                     choice.getElem().addClass('active');
+                    await sleep(1)
                     let users = this.heros
                                     .filter((h)=>h.canUseAction(action));
                     let user = await this.makeChoice(users);
