@@ -11,6 +11,14 @@ function sleep(seconds: number) {
   });
 }
 
+function shuffleArray<T>(array: T[]):void {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
 
 export abstract class Choosable{
     abstract getElem(): JQuery; 
@@ -49,7 +57,9 @@ export enum GameEvent{
 export abstract class Party{
     opponent: Party|null = null;
     deck: Cards.Card[] = [];
+    deckHeros: Cards.Card[] = [];
     hand: Cards.Card[] = [];
+    handHeros: Cards.Card[] = [];
     heros: Heros.Hero[] = [];
     game: Game;
     label: 'a'|'b';
@@ -62,8 +72,11 @@ export abstract class Party{
     constructor(label: 'a'|'b', game: Game, deck:Cards.Card[]){
         this.label = label;
         this.game = game;
-        this.deck = deck;
-        this.hand = deck.slice();
+        this.deck = deck.filter((c)=>c instanceof Cards.ActionCard);
+        this.deckHeros = deck.filter((c)=> !(c instanceof Cards.ActionCard));
+        shuffleArray(this.deck)
+        shuffleArray(this.deckHeros)
+        this.hand = [];
         this.onUpdate = ()=>{};
     }
     addHero(hero: Heros.Hero){
@@ -82,8 +95,8 @@ export abstract class Party{
     getPossibleActions() : Choosable[]{
         let r : Choosable[] = [];
 
-        if(!this.playedHero && this.hand.some((c)=>c.type == Cards.CardType.CLASS)){
-            r = r.concat(this.hand.filter((c)=>c.type == Cards.CardType.RACE));
+        if(!this.playedHero && this.handHeros.some((c)=>c.type == Cards.CardType.CLASS)){
+            r = r.concat(this.handHeros.filter((c)=>c.type == Cards.CardType.RACE));
         }
 
         if(this.heros.length > 0){
@@ -126,14 +139,35 @@ export abstract class Party{
         for(let h of this.heros){
             await h.onNewTurn();
         }
-        /*
+
         let handSize = this.hand.length;
         let toDraw = 5 - handSize;
+        console.warn(handSize,"=", this.hand.map((c)=>c.name));
         for(let i = 0; i < toDraw; i++){
             this.drawCard();
         }
-        */
+
+        handSize = this.handHeros.length;
+        toDraw = 5 - handSize;
+        for(let i = 0; i < toDraw; i++){
+            this.drawHeroCard();
+        }
+
+        this.onUpdate();
         return new Promise((resolve)=>resolve());
+    }
+
+    drawHeroCard(): void{
+        let card = this.deckHeros.pop();
+        if(card)
+            this.handHeros.push(card)
+    }
+
+    drawCard(): void{
+        let card = this.deck.pop();
+        console.log(card);
+        if(card)
+            this.hand.push(card)
     }
 
     async playTurn() : Promise<{}>{
@@ -163,7 +197,7 @@ export abstract class Party{
                 let raceCard = choice;
                 raceCard.getElem().addClass('active')
                 let classCard = await this.makeChoice(
-                    this.hand.filter((c)=>c.type == Cards.CardType.CLASS)
+                    this.handHeros.filter((c)=>c.type == Cards.CardType.CLASS)
                 ) as Cards.HeroComponent;
 
                 classCard.getElem().addClass('active')
@@ -225,7 +259,12 @@ export abstract class Party{
     }
     discard(c: Cards.Card) : void{
         let index = this.hand.indexOf(c);
-        this.hand.splice(index, 1);
+        if(index !== -1)
+            this.hand.splice(index, 1);
+
+        index = this.handHeros.indexOf(c);
+        if(index !== -1)
+            this.handHeros.splice(index, 1);
 
         this.onUpdate();
     }

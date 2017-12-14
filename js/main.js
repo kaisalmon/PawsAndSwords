@@ -579,6 +579,14 @@ function sleep(seconds) {
         }, seconds * 1000);
     });
 }
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
 class Choosable {
     highlight(highlightClass) {
         this.getElem().addClass('choosable');
@@ -615,14 +623,19 @@ class Party {
     constructor(label, game, deck) {
         this.opponent = null;
         this.deck = [];
+        this.deckHeros = [];
         this.hand = [];
+        this.handHeros = [];
         this.heros = [];
         this.playedHero = false;
         this.lockActions = false;
         this.label = label;
         this.game = game;
-        this.deck = deck;
-        this.hand = deck.slice();
+        this.deck = deck.filter((c) => c instanceof Cards.ActionCard);
+        this.deckHeros = deck.filter((c) => !(c instanceof Cards.ActionCard));
+        shuffleArray(this.deck);
+        shuffleArray(this.deckHeros);
+        this.hand = [];
         this.onUpdate = () => { };
     }
     addHero(hero) {
@@ -639,8 +652,8 @@ class Party {
     }
     getPossibleActions() {
         let r = [];
-        if (!this.playedHero && this.hand.some((c) => c.type == Cards.CardType.CLASS)) {
-            r = r.concat(this.hand.filter((c) => c.type == Cards.CardType.RACE));
+        if (!this.playedHero && this.handHeros.some((c) => c.type == Cards.CardType.CLASS)) {
+            r = r.concat(this.handHeros.filter((c) => c.type == Cards.CardType.RACE));
         }
         if (this.heros.length > 0) {
             let usableActions = this.hand
@@ -677,15 +690,31 @@ class Party {
             for (let h of this.heros) {
                 yield h.onNewTurn();
             }
-            /*
             let handSize = this.hand.length;
             let toDraw = 5 - handSize;
-            for(let i = 0; i < toDraw; i++){
+            console.warn(handSize, "=", this.hand.map((c) => c.name));
+            for (let i = 0; i < toDraw; i++) {
                 this.drawCard();
             }
-            */
+            handSize = this.handHeros.length;
+            toDraw = 5 - handSize;
+            for (let i = 0; i < toDraw; i++) {
+                this.drawHeroCard();
+            }
+            this.onUpdate();
             return new Promise((resolve) => resolve());
         });
+    }
+    drawHeroCard() {
+        let card = this.deckHeros.pop();
+        if (card)
+            this.handHeros.push(card);
+    }
+    drawCard() {
+        let card = this.deck.pop();
+        console.log(card);
+        if (card)
+            this.hand.push(card);
     }
     playTurn() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -711,7 +740,7 @@ class Party {
                 if (choice instanceof Cards.HeroComponent) {
                     let raceCard = choice;
                     raceCard.getElem().addClass('active');
-                    let classCard = yield this.makeChoice(this.hand.filter((c) => c.type == Cards.CardType.CLASS));
+                    let classCard = yield this.makeChoice(this.handHeros.filter((c) => c.type == Cards.CardType.CLASS));
                     classCard.getElem().addClass('active');
                     let zone = yield this.makeChoice(this.getPlaceableZones());
                     this.discard(classCard);
@@ -777,7 +806,11 @@ class Party {
     }
     discard(c) {
         let index = this.hand.indexOf(c);
-        this.hand.splice(index, 1);
+        if (index !== -1)
+            this.hand.splice(index, 1);
+        index = this.handHeros.indexOf(c);
+        if (index !== -1)
+            this.handHeros.splice(index, 1);
         this.onUpdate();
     }
 }
@@ -1321,8 +1354,14 @@ class GameRenderer {
         for (let c of this.game.partyA.hand) {
             c.render().appendTo(this.$handA);
         }
+        for (let c of this.game.partyA.handHeros) {
+            c.render().appendTo(this.$handA);
+        }
         this.$handB.empty();
         for (let c of this.game.partyB.hand) {
+            c.render().appendTo(this.$handB);
+        }
+        for (let c of this.game.partyB.handHeros) {
             c.render().appendTo(this.$handB);
         }
     }

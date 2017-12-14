@@ -40,8 +40,14 @@ class GameRenderer{
         for(let c of this.game.partyA.hand){
             c.render().appendTo(this.$handA);
         }
+        for(let c of this.game.partyA.handHeros){
+            c.render().appendTo(this.$handA);
+        }
         this.$handB.empty();
         for(let c of this.game.partyB.hand){
+            c.render().appendTo(this.$handB);
+        }
+        for(let c of this.game.partyB.handHeros){
             c.render().appendTo(this.$handB);
         }
     } 
