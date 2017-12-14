@@ -811,6 +811,7 @@ exports.UIParty = UIParty;
 class RandomParty extends Party {
     makeChoice(options, highlightClass) {
         return __awaiter(this, void 0, void 0, function* () {
+            yield sleep(0.5);
             return yield this.game.randomChoice(options);
         });
     }

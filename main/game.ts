@@ -256,6 +256,7 @@ export class UIParty extends Party{
 }
 export class RandomParty extends Party{
     async makeChoice<T extends Choosable>(options:T[], highlightClass?:string|undefined): Promise<T>{
+        await sleep(0.5)
         return await this.game.randomChoice(options);
     }
 }

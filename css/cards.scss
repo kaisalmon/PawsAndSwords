@@ -182,6 +182,13 @@
 
   .hand--B &{
       transform: scalex(-1);
+      & > *{
+          opacity: 1;
+          transition: opacity 0s linear 0.2s;
+      }
+      &:not(.active) > *{
+        opacity: 0;
+      }
       &.active{
         transform: scale(1.2);
       }
