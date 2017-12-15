@@ -79,6 +79,9 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             case "until_attacks":{
                 return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_ATTACKS ,"until after their next attack");
             }
+            case "once_per_turn":{
+                return new he_OncePerTurn(effects as HeroEffect[]);
+            }
 
             //Hero Passives
             case "action":{
@@ -355,6 +358,36 @@ export class he_UntilEvent extends HeroEffect{
     }
     description(): string{
         return '%target% has '+ this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
+    }
+}
+
+export class he_OncePerTurn extends HeroEffect{
+    effects: HeroEffect[];
+    
+    constructor(effects: HeroEffect[]){
+        super();
+        this.effects = effects;
+    }
+
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        if(user.turnDisabledEffects.indexOf(this) == -1){ 
+            user.turnDisabledEffects.push(this); 
+            
+            for(let e of this.effects){
+                await e.apply(user, target);
+            }
+        }
+        return new Promise((resolve)=>resolve());
+    }
+
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return this.effects[0].isValid(user, target) && user.turnDisabledEffects.indexOf(this) == -1;
+    }
+
+    description(): string{
+        return this.effects.map(
+            (e) => e.description()
+        ).join(", ")+'<i>(Max once per turn)</i>'; 
     }
 }
 

@@ -81,7 +81,9 @@ let all_cards_json = [
     {name:"Squirrel", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
         {type:"while_damaged", effects:[
             {type:"on_attacked", effects:[
-                {type:"move_random"}, 
+                {type:"once_per_turn", effects:[
+                    {type:"move_random"}, 
+                ]} 
             ]} 
         ]} 
     ]},
@@ -107,10 +109,6 @@ let all_cards_json = [
     ]},
 
 
-    {name:"Teleport", type:"spell",icon:"teleport", effects:[
-        {type:"move"}
-    ]},
-
     {name:"Magic Missile", type:"spell",icon:"ringed-beam", effects:[
         {type:"all_foes", effects:[
             {type:"damage", amount:"A + 1"}
@@ -125,19 +123,7 @@ let all_cards_json = [
 
     {name:"Smite", type:"spell",icon:"winged-sword", effects:[
         {type:"attack", effects:[
-            {type:"damage", amount:"20"}
-        ]} 
-    ]},
-
-    {name:"Smite", type:"spell",icon:"winged-sword", effects:[
-        {type:"attack", effects:[
-            {type:"damage", amount:"20"}
-        ]} 
-    ]},
-
-    {name:"Smite", type:"spell",icon:"winged-sword", effects:[
-        {type:"attack", effects:[
-            {type:"damage", amount:"20"}
+            {type:"damage", amount:"A+S"}
         ]} 
     ]},
 

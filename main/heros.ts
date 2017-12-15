@@ -58,6 +58,7 @@ export class Hero extends Game.Choosable{
     slain: boolean = false;
 
     tempPassives: TempPassive[] = [];
+    turnDisabledEffects: Effects.he_OncePerTurn[] = [];
 
     //action cache, while actions are locked
     cached_builtInActions: BuiltInAction[]|undefined;

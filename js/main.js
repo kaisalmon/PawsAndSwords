@@ -222,6 +222,9 @@ function _parseEffects(json, sourceName, sourceIcon) {
             case "until_attacks": {
                 return new he_UntilEvent(effects, Game.GameEvent.ON_ATTACKS, "until after their next attack");
             }
+            case "once_per_turn": {
+                return new he_OncePerTurn(effects);
+            }
             //Hero Passives
             case "action": {
                 return new hp_Action(effects);
@@ -486,6 +489,30 @@ class he_UntilEvent extends HeroEffect {
     }
 }
 exports.he_UntilEvent = he_UntilEvent;
+class he_OncePerTurn extends HeroEffect {
+    constructor(effects) {
+        super();
+        this.effects = effects;
+    }
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (user.turnDisabledEffects.indexOf(this) == -1) {
+                user.turnDisabledEffects.push(this);
+                for (let e of this.effects) {
+                    yield e.apply(user, target);
+                }
+            }
+            return new Promise((resolve) => resolve());
+        });
+    }
+    isValid(user, target) {
+        return this.effects[0].isValid(user, target) && user.turnDisabledEffects.indexOf(this) == -1;
+    }
+    description() {
+        return this.effects.map((e) => e.description()).join(", ") + '<i>(Max once per turn)</i>';
+    }
+}
+exports.he_OncePerTurn = he_OncePerTurn;
 class hp_Action extends HeroPassive {
     constructor(effects) {
         super();
@@ -1003,6 +1030,7 @@ class Hero extends Game.Choosable {
         this.justJoined = true;
         this.slain = false;
         this.tempPassives = [];
+        this.turnDisabledEffects = [];
         this.classCard = classCard;
         this.raceCard = raceCard;
         this.damage = 0;
@@ -1391,7 +1419,9 @@ let all_cards_json = [
     { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
             { type: "while_damaged", effects: [
                     { type: "on_attacked", effects: [
-                            { type: "move_random" },
+                            { type: "once_per_turn", effects: [
+                                    { type: "move_random" },
+                                ] }
                         ] }
                 ] }
         ] },
@@ -1414,9 +1444,6 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Teleport", type: "spell", icon: "teleport", effects: [
-            { type: "move" }
-        ] },
     { name: "Magic Missile", type: "spell", icon: "ringed-beam", effects: [
             { type: "all_foes", effects: [
                     { type: "damage", amount: "A + 1" }
@@ -1429,17 +1456,7 @@ let all_cards_json = [
         ] },
     { name: "Smite", type: "spell", icon: "winged-sword", effects: [
             { type: "attack", effects: [
-                    { type: "damage", amount: "20" }
-                ] }
-        ] },
-    { name: "Smite", type: "spell", icon: "winged-sword", effects: [
-            { type: "attack", effects: [
-                    { type: "damage", amount: "20" }
-                ] }
-        ] },
-    { name: "Smite", type: "spell", icon: "winged-sword", effects: [
-            { type: "attack", effects: [
-                    { type: "damage", amount: "20" }
+                    { type: "damage", amount: "A+S" }
                 ] }
         ] },
     { name: "Shockwave", type: "spell", icon: "winged-sword", effects: [
