@@ -1457,9 +1457,13 @@ let deckA = [];
 let deckB = [];
 for (let card_json of all_cards_json) {
     let c = Cards.parseCard(card_json);
-    deckA.push(c);
-    c = Cards.parseCard(card_json);
-    deckB.push(c);
+    let count = c instanceof Cards.ActionCard ? 3 : 1;
+    for (let i = 0; i < count; i++) {
+        c = Cards.parseCard(card_json);
+        deckA.push(c);
+        c = Cards.parseCard(card_json);
+        deckB.push(c);
+    }
 }
 let game = new Game.Game(deckA, deckB);
 let render = new GameRenderer(game);
