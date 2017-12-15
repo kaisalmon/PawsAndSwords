@@ -52,17 +52,21 @@ export function parseCard(json:any) : Card{
         throw "Unknown card type "+json.type;
     }
 }
-
-export class Card extends Game.Choosable{
+ 
+export abstract class Card extends Game.Choosable{
     name: string;
     icon: string;
     type: CardType;
     $card: JQuery | undefined;
 
     render(): JQuery {
+        if(this.$card){
+            return this.$card;
+        }
         this.$card = $('<div/>').addClass('card--'+this.type).addClass('card');
         $('<div/>').addClass('card__titlebar').text(this.type + " - " + this.name).appendTo(this.$card);
         //$('<img/>').addClass('card__icon').appendTo($card).attr('src','http://kaisalmon.com/cardgame/include/loadImage.php?icon='+this.icon)
+        this.addDetails();
         return this.$card;
     }
     getElem() : JQuery{
@@ -71,6 +75,9 @@ export class Card extends Game.Choosable{
         }
         throw "Card is not rendered"
     }
+
+    abstract addDetails(): void;
+
     constructor(name:string, icon:string, type:CardType){
         super();
         this.name = name;
@@ -84,8 +91,11 @@ export class ActionCard extends Card{
         super(name, icon, type);
         this.effects = effects;
     }
-    render(): JQuery{
-        var $card = super.render();
+    addDetails(): void{
+        if(!this.$card)
+            return
+
+        var $card = this.$card;
         var descriptions: string[] = this.effects.map(
             (e) => {
                 let descr = e.description();
@@ -94,7 +104,6 @@ export class ActionCard extends Card{
         );
         var description = descriptions.join(". <br/>").replace(/%to target%/g,"to this hero").replace(/%target%/g,"this hero");
         $('<div/>').addClass('card__description').appendTo($card).html(description);
-        return $card;
     }
 
     async apply(hero: Heros.Hero): Promise<{}>{
@@ -120,8 +129,11 @@ export class HeroComponent extends Card{
         this.health = health;
         this.effects = effects;
     }
-    render(): JQuery{
-        var $card = super.render();
+    addDetails(): void{
+        if(!this.$card)
+            return
+
+        var $card = this.$card;
         var $row = $('<div/>').addClass('card__stats').appendTo($card);
         $('<div/>').addClass('card__strength').appendTo($row).text(this.strength)
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana)
@@ -132,6 +144,5 @@ export class HeroComponent extends Card{
         var description = descriptions.join(".<br>").replace(/%to target%/g,"to this hero").replace(/%target%/g,"the "+this.name);
         description = description.charAt(0).toUpperCase() + description.slice(1);
         $('<div/>').addClass('card__description').appendTo($card).html(description);
-        return $card;
     }
 }

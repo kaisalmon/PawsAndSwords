@@ -16,8 +16,8 @@ class GameRenderer{
                                  .css('bottom', '0')
                                  .appendTo('body');
         this.$handB = $('<div/>').css('position', 'absolute')
+                                .addClass('hand--B')
                                  .css('top', '0')
-                                 .hide()
                                  .appendTo('body');
 
         this.$board.empty(); 
@@ -40,8 +40,14 @@ class GameRenderer{
         for(let c of this.game.partyA.hand){
             c.render().appendTo(this.$handA);
         }
+        for(let c of this.game.partyA.handHeros){
+            c.render().appendTo(this.$handA);
+        }
         this.$handB.empty();
         for(let c of this.game.partyB.hand){
+            c.render().appendTo(this.$handB);
+        }
+        for(let c of this.game.partyB.handHeros){
             c.render().appendTo(this.$handB);
         }
     } 
@@ -164,8 +170,10 @@ let deckA:Cards.Card[] = [];
 let deckB:Cards.Card[] = [];
 
 for(let card_json of player_card_json){
-    let c = Cards.parseCard(card_json);
-    deckA.push(c);
+    for(var i = 0; i<3; i++){
+        let c = Cards.parseCard(card_json);
+        deckA.push(c);
+    }
 }
 
 for(let card_json of monster_card_json){

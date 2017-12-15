@@ -54,8 +54,9 @@
   background-color: white;
   vertical-align: text-bottom;
   width: 200px;
+  height: 200px;
     
-  transform: opacity 0.5s, transform 0.5s;
+  transition: opacity 0.5s, transform 0.5s;
 
   & + &{
     margin-right: 15px;
@@ -178,6 +179,20 @@
       visibility: visible;
       opacity:1;
       transition:visibility 0s linear 1s, opacity 0.3s linear 1s;
+  }
+
+  .hand--B &{
+      transform: scalex(-1);
+      & > *{
+          opacity: 1;
+          transition: opacity 0s linear 0.2s;
+      }
+      &:not(.active) > *{
+        opacity: 0;
+      }
+      &.active{
+        transform: scale(1.2);
+      }
   }
 }
 

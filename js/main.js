@@ -64,9 +64,13 @@ function parseCard(json) {
 exports.parseCard = parseCard;
 class Card extends Game.Choosable {
     render() {
+        if (this.$card) {
+            return this.$card;
+        }
         this.$card = $('<div/>').addClass('card--' + this.type).addClass('card');
         $('<div/>').addClass('card__titlebar').text(this.type + " - " + this.name).appendTo(this.$card);
         //$('<img/>').addClass('card__icon').appendTo($card).attr('src','http://kaisalmon.com/cardgame/include/loadImage.php?icon='+this.icon)
+        this.addDetails();
         return this.$card;
     }
     getElem() {
@@ -88,15 +92,16 @@ class ActionCard extends Card {
         super(name, icon, type);
         this.effects = effects;
     }
-    render() {
-        var $card = super.render();
+    addDetails() {
+        if (!this.$card)
+            return;
+        var $card = this.$card;
         var descriptions = this.effects.map((e) => {
             let descr = e.description();
             return descr.charAt(0).toUpperCase() + descr.slice(1);
         });
         var description = descriptions.join(". <br/>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "this hero");
         $('<div/>').addClass('card__description').appendTo($card).html(description);
-        return $card;
     }
     apply(hero) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -118,8 +123,10 @@ class HeroComponent extends Card {
         this.health = health;
         this.effects = effects;
     }
-    render() {
-        var $card = super.render();
+    addDetails() {
+        if (!this.$card)
+            return;
+        var $card = this.$card;
         var $row = $('<div/>').addClass('card__stats').appendTo($card);
         $('<div/>').addClass('card__strength').appendTo($row).text(this.strength);
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana);
@@ -128,7 +135,6 @@ class HeroComponent extends Card {
         var description = descriptions.join(".<br>").replace(/%to target%/g, "to this hero").replace(/%target%/g, "the " + this.name);
         description = description.charAt(0).toUpperCase() + description.slice(1);
         $('<div/>').addClass('card__description').appendTo($card).html(description);
-        return $card;
     }
 }
 exports.HeroComponent = HeroComponent;
@@ -574,6 +580,21 @@ const Heros = require("./heros");
 const Cards = require("./cards");
 const Effects = require("./effects");
 const $ = require("jquery");
+function sleep(seconds) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve();
+        }, seconds * 1000);
+    });
+}
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
 class Choosable {
     highlight(highlightClass) {
         this.getElem().addClass('choosable');
@@ -610,14 +631,20 @@ class Party {
     constructor(label, game, deck) {
         this.opponent = null;
         this.deck = [];
+        this.deckHeros = [];
         this.hand = [];
+        this.handHeros = [];
         this.heros = [];
         this.playedHero = false;
         this.lockActions = false;
         this.label = label;
         this.game = game;
-        this.deck = deck;
-        this.hand = deck.slice();
+        this.deck = deck.filter((c) => c instanceof Cards.ActionCard);
+        this.deckHeros = deck.filter((c) => !(c instanceof Cards.ActionCard));
+        console.log(this.deckHeros);
+        shuffleArray(this.deck);
+        shuffleArray(this.deckHeros);
+        this.hand = [];
         this.onUpdate = () => { };
     }
     addHero(hero) {
@@ -634,8 +661,8 @@ class Party {
     }
     getPossibleActions() {
         let r = [];
-        if (!this.playedHero && this.hand.some((c) => c.type == Cards.CardType.CLASS)) {
-            r = r.concat(this.hand.filter((c) => c.type == Cards.CardType.RACE));
+        if (!this.playedHero && this.handHeros.some((c) => c.type == Cards.CardType.CLASS)) {
+            r = r.concat(this.handHeros.filter((c) => c.type == Cards.CardType.RACE));
         }
         if (!this.playedHero) {
             r = r.concat(this.hand.filter((c) => c.type == Cards.CardType.MONSTER));
@@ -675,15 +702,32 @@ class Party {
             for (let h of this.heros) {
                 yield h.onNewTurn();
             }
-            /*
             let handSize = this.hand.length;
             let toDraw = 5 - handSize;
-            for(let i = 0; i < toDraw; i++){
+            console.warn(handSize, "=", this.hand.map((c) => c.name));
+            for (let i = 0; i < toDraw; i++) {
                 this.drawCard();
             }
-            */
+            handSize = this.handHeros.length;
+            toDraw = 5 - handSize;
+            for (let i = 0; i < toDraw; i++) {
+                this.drawHeroCard();
+            }
+            this.onUpdate();
             return new Promise((resolve) => resolve());
         });
+    }
+    drawHeroCard() {
+        let card = this.deckHeros.pop();
+        console.log(card);
+        if (card)
+            this.handHeros.push(card);
+    }
+    drawCard() {
+        let card = this.deck.pop();
+        console.log(card);
+        if (card)
+            this.hand.push(card);
     }
     playTurn() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -712,7 +756,7 @@ class Party {
                     let zone;
                     if (choice.type != Cards.CardType.MONSTER) {
                         raceCard.getElem().addClass('active');
-                        let classCard = yield this.makeChoice(this.hand.filter((c) => c.type == Cards.CardType.CLASS));
+                        let classCard = yield this.makeChoice(this.handHeros.filter((c) => c.type == Cards.CardType.CLASS));
                         classCard.getElem().addClass('active');
                         zone = yield this.makeChoice(this.getPlaceableZones());
                         this.discard(classCard);
@@ -731,6 +775,7 @@ class Party {
                     let action = choice;
                     try {
                         choice.getElem().addClass('active');
+                        yield sleep(1);
                         let users = this.heros
                             .filter((h) => h.canUseAction(action));
                         let user = yield this.makeChoice(users);
@@ -782,7 +827,11 @@ class Party {
     }
     discard(c) {
         let index = this.hand.indexOf(c);
-        this.hand.splice(index, 1);
+        if (index !== -1)
+            this.hand.splice(index, 1);
+        index = this.handHeros.indexOf(c);
+        if (index !== -1)
+            this.handHeros.splice(index, 1);
         this.onUpdate();
     }
 }
@@ -816,6 +865,7 @@ exports.UIParty = UIParty;
 class RandomParty extends Party {
     makeChoice(options, highlightClass) {
         return __awaiter(this, void 0, void 0, function* () {
+            yield sleep(0.5);
             return yield this.game.randomChoice(options);
         });
     }
@@ -986,15 +1036,18 @@ class Hero extends Game.Choosable {
             //Fire OnEvent passives
             let on_events = this.getPassivesOfType(Effects.hp_OnEvent).filter((hp) => hp.trigger == trigger);
             if (on_events.length > 0) {
-                if (this.$hero) {
+                let any_valid = on_events.some((ov) => ov.effects[0].isValid(this, this));
+                if (this.$hero && any_valid) {
                     this.$hero.addClass('animated flash');
                     yield sleep(1);
                     this.$hero.removeClass('animated flash');
                 }
                 for (let ov of on_events) {
                     try {
-                        for (let e of ov.effects) {
-                            yield e.apply(this, this);
+                        if (ov.effects[0].isValid(this, this)) {
+                            for (let e of ov.effects) {
+                                yield e.apply(this, this);
+                            }
                         }
                     }
                     catch (e) {
@@ -1319,8 +1372,8 @@ class GameRenderer {
             .css('bottom', '0')
             .appendTo('body');
         this.$handB = $('<div/>').css('position', 'absolute')
+            .addClass('hand--B')
             .css('top', '0')
-            .hide()
             .appendTo('body');
         this.$board.empty();
         for (let z of this.game.zones) {
@@ -1342,8 +1395,14 @@ class GameRenderer {
         for (let c of this.game.partyA.hand) {
             c.render().appendTo(this.$handA);
         }
+        for (let c of this.game.partyA.handHeros) {
+            c.render().appendTo(this.$handA);
+        }
         this.$handB.empty();
         for (let c of this.game.partyB.hand) {
+            c.render().appendTo(this.$handB);
+        }
+        for (let c of this.game.partyB.handHeros) {
             c.render().appendTo(this.$handB);
         }
     }
@@ -1450,8 +1509,10 @@ let monster_card_json = [
 let deckA = [];
 let deckB = [];
 for (let card_json of player_card_json) {
-    let c = Cards.parseCard(card_json);
-    deckA.push(c);
+    for (var i = 0; i < 3; i++) {
+        let c = Cards.parseCard(card_json);
+        deckA.push(c);
+    }
 }
 for (let card_json of monster_card_json) {
     for (var i = 0; i < 3; i++) {
