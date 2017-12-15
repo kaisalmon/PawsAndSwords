@@ -52,6 +52,10 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
                 if(amount)
                     return new he_Damage(amount);
             }
+            case "heal":{
+                if(amount)
+                    return new he_Heal(amount);
+            }
             case "all_foes":{
                 return new he_AllFoes(effects as HeroEffect[]);
             }
@@ -190,6 +194,51 @@ export class he_Damage extends HeroEffect{
         return "deal "+this.amount+" damage %to target%";
     }
 }
+
+export class he_Heal extends HeroEffect{
+    amount: Heros.Amount;
+    
+    constructor(amount: Heros.Amount){
+        super();
+        this.amount = amount;
+    }
+
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        return new Promise(async (resolve)=>
+            {
+                let val = this.amount.val(user);
+                if(val > 0){
+                    target.damage -= val;
+                    if(target.damage < 0){
+                        target.damage = 0;
+                    }
+                    if(target.$hero){
+                        target.$hero.addClass('animated rubberBand')
+                        target.rerender();
+                        setTimeout(()=>{
+                            if(target.$hero){
+                                    target.$hero.removeClass('rubberBand');
+                            }
+                            resolve();
+                        },1000)
+                    }else{
+                        resolve();     
+                    }
+                }else{
+                    resolve();     
+                }
+            })
+    }
+
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return target.damage != 0;      
+    }
+
+    description(): string{
+        return "remove "+this.amount+" damage from %target%";
+    }
+}
+
 
 class he_AllFoes extends HeroEffect{
     effects: HeroEffect[];

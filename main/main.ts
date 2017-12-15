@@ -87,13 +87,23 @@ let all_cards_json = [
             ]} 
         ]} 
     ]},
-    {name:"Bear", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
-        {type:"on_join", effects:[
+    {name:"Bear", type:"race",icon:"bear-head", strength:1, arcana:1, health:10, effects:[
+        {type:"action", effects:[
+            {type:"heal", amount:"8"},
             {type:"until_attacked", effects:[
                 {type:"staggered"}
             ]} 
         ]} 
     ]},
+
+    {name:"Racoon", type:"race",icon:"bear-head", strength:1, arcana:1, health:10, effects:[
+        {type:"on_join", effects:[
+            {type:"damage", amount:"12"},
+            {type:"heal", amount:"8"},
+        ]} 
+    ]},
+
+
 
     {name:"Hermit Crab", type:"race",icon:"person", strength:1, arcana:1, health:10, effects:[
         {type:"on_new_turn", effects:[

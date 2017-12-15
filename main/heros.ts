@@ -110,6 +110,8 @@ export class Hero extends Game.Choosable{
     async onNewTurn() : Promise<{}>{
         this.usedAction = false;
         this.justJoined = false;
+        this.turnDisabledEffects = [];
+
         await this.onTrigger(Game.GameEvent.ON_NEW_TURN)
         return new Promise((resolve)=>resolve());
     }
@@ -237,7 +239,7 @@ export class Hero extends Game.Choosable{
             let passives = this.getPassivesOfType(Effects.hp_Action);
             for(let passive of passives){
                 actions.push(
-                    new BuiltInAction(this, passive.effects, "stars-stack")
+                    new BuiltInAction(this, passive.effects, passive.sourceIcon || "stars-stack")
                 )
             }
 

@@ -195,6 +195,10 @@ function _parseEffects(json, sourceName, sourceIcon) {
                 if (amount)
                     return new he_Damage(amount);
             }
+            case "heal": {
+                if (amount)
+                    return new he_Heal(amount);
+            }
             case "all_foes": {
                 return new he_AllFoes(effects);
             }
@@ -333,6 +337,48 @@ class he_Damage extends HeroEffect {
     }
 }
 exports.he_Damage = he_Damage;
+class he_Heal extends HeroEffect {
+    constructor(amount) {
+        super();
+        this.amount = amount;
+    }
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+                let val = this.amount.val(user);
+                if (val > 0) {
+                    target.damage -= val;
+                    if (target.damage < 0) {
+                        target.damage = 0;
+                    }
+                    if (target.$hero) {
+                        target.$hero.addClass('animated rubberBand');
+                        target.rerender();
+                        setTimeout(() => {
+                            if (target.$hero) {
+                                target.$hero.removeClass('rubberBand');
+                            }
+                            resolve();
+                        }, 1000);
+                    }
+                    else {
+                        resolve();
+                    }
+                }
+                else {
+                    resolve();
+                }
+            }));
+        });
+    }
+    isValid(user, target) {
+        return target.damage != 0;
+    }
+    description() {
+        return "remove " + this.amount + " damage from %target%";
+    }
+}
+exports.he_Heal = he_Heal;
 class he_AllFoes extends HeroEffect {
     constructor(effects) {
         super();
@@ -1078,6 +1124,7 @@ class Hero extends Game.Choosable {
         return __awaiter(this, void 0, void 0, function* () {
             this.usedAction = false;
             this.justJoined = false;
+            this.turnDisabledEffects = [];
             yield this.onTrigger(Game.GameEvent.ON_NEW_TURN);
             return new Promise((resolve) => resolve());
         });
@@ -1189,7 +1236,7 @@ class Hero extends Game.Choosable {
             ], "back-forth"));
             let passives = this.getPassivesOfType(Effects.hp_Action);
             for (let passive of passives) {
-                actions.push(new BuiltInAction(this, passive.effects, "stars-stack"));
+                actions.push(new BuiltInAction(this, passive.effects, passive.sourceIcon || "stars-stack"));
             }
             this.cached_builtInActions = actions;
         }
@@ -1425,11 +1472,18 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Bear", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
-            { type: "on_join", effects: [
+    { name: "Bear", type: "race", icon: "bear-head", strength: 1, arcana: 1, health: 10, effects: [
+            { type: "action", effects: [
+                    { type: "heal", amount: "8" },
                     { type: "until_attacked", effects: [
                             { type: "staggered" }
                         ] }
+                ] }
+        ] },
+    { name: "Racoon", type: "race", icon: "bear-head", strength: 1, arcana: 1, health: 10, effects: [
+            { type: "on_join", effects: [
+                    { type: "damage", amount: "12" },
+                    { type: "heal", amount: "8" },
                 ] }
         ] },
     { name: "Hermit Crab", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
