@@ -3,7 +3,7 @@ import * as Cards from "./cards";
 import * as Effects from "./effects";
 import * as $ from "jquery";
 
-function sleep(seconds: number) { 
+export function sleep(seconds: number) { 
   return new Promise(resolve => {
     setTimeout(() => {
       resolve();

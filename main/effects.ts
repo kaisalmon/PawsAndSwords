@@ -282,6 +282,11 @@ export class he_Attack extends HeroEffect{
     async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
         let foe = target.getMeleeFoe()
         if(foe && !foe.hasKeyword(Keyword.INVISIBLE)){
+            if(target.$hero){
+                target.$hero.addClass('animated attack');
+                await Game.sleep(1);
+                target.$hero.removeClass('attack');
+            } 
             await foe.onTrigger(Game.GameEvent.ON_ATTACKED)
             
             // In case the melee target has changed
@@ -290,7 +295,7 @@ export class he_Attack extends HeroEffect{
                 throw new EffectFailed();
             }
             for(let e of this.effects){
-                await e.apply(user, foe);
+                await e.apply(target, foe);
             }
             await target.onTrigger(Game.GameEvent.ON_ATTACKS)
             return new Promise((resolve)=>resolve());

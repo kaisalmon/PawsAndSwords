@@ -1,0 +1,181 @@
+.wrapper--hero {
+  display: inline-block; }
+
+.choosable {
+  transition: filter 0.5s; }
+  .choosable--highlighted {
+    cursor: pointer;
+    filter: drop-shadow(0 0 2px white) drop-shadow(0 0 1px orange) drop-shadow(0 0 1px red); }
+    .choosable--highlighted:hover {
+      filter: brightness(125%) drop-shadow(0 0 3px white) drop-shadow(0 0 2px orange) drop-shadow(0 0 2px red); }
+
+.card {
+  z-index: -1; }
+
+.card, .hero {
+  font-family: 'Rokkitt';
+  border: 4px solid black;
+  border-radius: 5px;
+  padding: 0.25cm;
+  margin: 6px;
+  display: inline-block;
+  position: relative;
+  background-color: white;
+  vertical-align: text-bottom;
+  width: 200px;
+  height: 200px;
+  transition: opacity 0.5s, transform 0.5s;
+  transition: transform 0.4s; }
+  .card + .card, .hero + .card, .card + .hero, .hero + .hero {
+    margin-right: 15px; }
+  .card > *, .hero > * {
+    box-sizing: border-box; }
+  .card__titlebar, .hero__titlebar {
+    text-shadow: 2px 0px black, -2px 0px black, 0px  2px black, 0px -2px black, 2px 2px black, -2px 2px black, 2px -2px black, -2px -2px black;
+    color: orange;
+    overflow: hidden;
+    padding: 0.25cm;
+    padding-top: 0;
+    margin-bottom: 0.25cm;
+    border-bottom: solid black 4px;
+    width: 100%;
+    font-weight: bold;
+    font-size: 22px;
+    line-height: 150%;
+    text-align: center;
+    height: 40px;
+    vertical-align: middle;
+    overflow-x: hidden;
+    white-space: nowrap; }
+  .card__icon, .hero__icon {
+    width: 4cm;
+    height: 4cm;
+    margin-left: 0.5cm;
+    filter: invert(100%); }
+  .card__stats, .hero__stats {
+    display: flex;
+    justify-content: space-between; }
+  .card__strength, .card__arcana, .card__health, .card__armored, .hero__strength, .hero__arcana, .hero__health, .hero__armored {
+    text-shadow: 2px 0px black, -2px 0px black, 0px  2px black, 0px -2px black, 2px 2px black, -2px 2px black, 2px -2px black, -2px -2px black;
+    color: white;
+    width: 1cm;
+    height: 1cm;
+    line-height: 150%;
+    text-align: center;
+    font-size: 0.7cm;
+    display: inline-block; }
+    .card__strength--damaged, .card__arcana--damaged, .card__health--damaged, .card__armored--damaged, .hero__strength--damaged, .hero__arcana--damaged, .hero__health--damaged, .hero__armored--damaged {
+      color: cyan; }
+  .card__strength, .hero__strength {
+    filter: invert(100%);
+    background-image: url("https://kaisalmon.com/cardgame/include/loadImage.php?icon=crossed-swords");
+    background-size: 100% 100%; }
+  .card__arcana, .hero__arcana {
+    filter: invert(100%);
+    background-image: url("https://kaisalmon.com/cardgame/include/loadImage.php?icon=seven-pointed-star");
+    background-size: 100% 100%; }
+  .card__health, .hero__health {
+    filter: invert(100%);
+    background-image: url("https://kaisalmon.com/cardgame/include/loadImage.php?icon=hearts");
+    background-size: 100% 100%; }
+  .card__armored, .hero__armored {
+    filter: invert(100%);
+    background-image: url("https://kaisalmon.com/cardgame/include/loadImage.php?icon=shield");
+    background-size: 100% 100%; }
+  .card.active, .hero.active {
+    transform: scale(1.2); }
+  .card__action-wrapper, .hero__action-wrapper {
+    height: 80px;
+    position: absolute;
+    bottom: -90px;
+    justify-content: space-around;
+    left: 0;
+    right: 0;
+    display: flex; }
+  .card--show-actions:hover .card__action, .hero--show-actions:hover .card__action, .card--show-actions:hover .hero__action, .hero--show-actions:hover .hero__action {
+    transform: scale(1);
+    transition-delay: 0s; }
+  .card__action, .hero__action {
+    transform: scale(0);
+    transition: transform 0.2s;
+    margin-right: 5px;
+    margin-left: 5px;
+    transition-delay: 0.2s; }
+    .card__action img, .hero__action img {
+      filter: invert(100%);
+      height: 80px;
+      width: 80px; }
+  .card__status, .hero__status {
+    z-index: 1;
+    opacity: 0;
+    visibility: hidden;
+    border: 4px solid black;
+    border-radius: 5px;
+    background: white;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    transform: translatey(calc(-100% - 10px));
+    transition: visibility 0s linear 0.3s, opacity 0.3s linear 0s; }
+    .card__status > div, .hero__status > div {
+      padding: 4px; }
+  .card:hover .card__status, .hero:hover .card__status, .card:hover .hero__status, .hero:hover .hero__status {
+    visibility: visible;
+    opacity: 1;
+    transition: visibility 0s linear 1s, opacity 0.3s linear 1s; }
+  .hand--B .card, .hand--B .hero {
+    transform: scalex(-1); }
+    .hand--B .card > *, .hand--B .hero > * {
+      opacity: 1;
+      transition: opacity 0s linear 0.2s; }
+    .hand--B .card:not(.active) > *, .hand--B .hero:not(.active) > * {
+      opacity: 0; }
+    .hand--B .card.active, .hand--B .hero.active {
+      transform: scale(1.2); }
+
+.zones {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  position: fixed;
+  top: 50%;
+  transform: translatey(-50%); }
+  .zones .zone {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 2px; }
+    .zones .zone__B, .zones .zone__A {
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      width: 20vmin;
+      height: 20vmin; }
+    .zones .zone.choosable--highlighted {
+      cursor: pointer;
+      filter: drop-shadow(0 0 2px white) drop-shadow(0 0 1px cyan) drop-shadow(0 0 1px blue); }
+      .zones .zone.choosable--highlighted:hover {
+        filter: brightness(125%) drop-shadow(0 0 3px white) drop-shadow(0 0 2px cyan) drop-shadow(0 0 2px blue); }
+
+.zone__A {
+  --attackDir: 1; }
+
+.zone__B {
+  --attackDir: -1; }
+
+.animated.attack {
+  animation: attackFrames linear 1s;
+  animation-iteration-count: 1;
+  transform-origin: 50% 50%; }
+
+@keyframes attackFrames {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg); }
+  40% {
+    transform: translate(0px, calc(var(--attackDir) * 100px)) rotate(22deg); }
+  60% {
+    transform: translate(0px, calc(var(--attackDir) * 100px)) rotate(22deg); }
+  70% {
+    transform: translate(0px, calc(var(--attackDir) * -30px)) rotate(0deg); }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg); } }
+
+/*# sourceMappingURL=cards.css.map */

@@ -413,6 +413,11 @@ class he_Attack extends HeroEffect {
         return __awaiter(this, void 0, void 0, function* () {
             let foe = target.getMeleeFoe();
             if (foe && !foe.hasKeyword(Keyword.INVISIBLE)) {
+                if (target.$hero) {
+                    target.$hero.addClass('animated attack');
+                    yield Game.sleep(1);
+                    target.$hero.removeClass('attack');
+                }
                 yield foe.onTrigger(Game.GameEvent.ON_ATTACKED);
                 // In case the melee target has changed
                 foe = target.getMeleeFoe();
@@ -420,7 +425,7 @@ class he_Attack extends HeroEffect {
                     throw new EffectFailed();
                 }
                 for (let e of this.effects) {
-                    yield e.apply(user, foe);
+                    yield e.apply(target, foe);
                 }
                 yield target.onTrigger(Game.GameEvent.ON_ATTACKS);
                 return new Promise((resolve) => resolve());
@@ -652,6 +657,7 @@ function sleep(seconds) {
         }, seconds * 1000);
     });
 }
+exports.sleep = sleep;
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));

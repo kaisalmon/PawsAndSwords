@@ -194,6 +194,7 @@
         transform: scale(1.2);
       }
   }
+
 }
 
 
@@ -233,3 +234,35 @@
         }
     }
 }
+
+.zone__A{
+    --attackDir: 1;
+}
+.zone__B{
+    --attackDir: -1;
+}
+.animated.attack{
+  animation: attackFrames linear 1s;
+  animation-iteration-count: 1;
+  transform-origin: 50% 50%;
+}
+
+@keyframes attackFrames{
+  0% {
+    transform:  translate(0px,0px)  rotate(0deg) ;
+  }
+  40% {
+    transform:  translate(0px,calc(var(--attackDir) * 100px))  rotate(22deg) ;
+ }
+  60% {
+    transform:  translate(0px,calc(var(--attackDir) * 100px))  rotate(22deg) ;
+  }
+  70% {
+    transform:  translate(0px,calc(var(--attackDir) * -30px))  rotate(0deg) ;
+  }
+  100% {
+    transform:  translate(0px,0px)  rotate(0deg) ;
+  }
+}
+
+
