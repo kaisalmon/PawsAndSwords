@@ -51,7 +51,8 @@ export enum GameEvent{
     ON_ATTACKED,
     ON_ATTACKS,
     ON_JOIN,
-    ON_SLAIN
+    ON_SLAIN,
+    ON_MOVE
 }
 
 export abstract class Party{
@@ -95,7 +96,7 @@ export abstract class Party{
     getPossibleActions() : Choosable[]{
         let r : Choosable[] = [];
 
-        if(!this.playedHero && this.handHeros.some((c)=>c.type == Cards.CardType.CLASS)){
+        if(this.heros.length < 3 && !this.playedHero && this.handHeros.some((c)=>c.type == Cards.CardType.CLASS)){
             r = r.concat(this.handHeros.filter((c)=>c.type == Cards.CardType.RACE));
         }
 
@@ -251,7 +252,7 @@ export abstract class Party{
         }
 
         for(let h of this.heros){
-            h.onTrigger(GameEvent.ON_TURN_END);
+            await h.onTrigger(GameEvent.ON_TURN_END);
         }
 
         console.log("Ending turn");

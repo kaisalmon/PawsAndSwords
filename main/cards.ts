@@ -14,6 +14,15 @@ export enum Role {
     NO_ROLE = 'none',
 }
 
+
+export function fitText($e: JQuery){
+    $e.each((i, element:HTMLElement)=>{
+        if (element.offsetHeight - 5 < element.scrollHeight){
+            $(element).addClass('fit-text')
+        } 
+    });
+}
+
 export function parseCard(json:any) : Card{
     if(json.type == "class" || json.type == "race"){
         let type : CardType = CardType.RACE;
@@ -61,7 +70,7 @@ export abstract class Card extends Game.Choosable{
         }
         this.$card = $('<div/>').addClass('card--'+this.type).addClass('card');
         $('<div/>').addClass('card__titlebar').text(this.type + " - " + this.name).appendTo(this.$card);
-        //$('<img/>').addClass('card__icon').appendTo($card).attr('src','http://kaisalmon.com/cardgame/include/loadImage.php?icon='+this.icon)
+        $('<img/>').addClass('card__icon').appendTo(this.$card).attr('src','http://kaisalmon.com/cardgame/include/loadImage.php?icon='+this.icon)
         this.addDetails();
         return this.$card;
     }

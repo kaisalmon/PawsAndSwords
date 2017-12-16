@@ -83,6 +83,9 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             case "until_attacks":{
                 return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_ATTACKS ,"until after their next attack");
             }
+            case "until_moves":{
+                return new he_UntilEvent(effects as HeroPassive[], Game.GameEvent.ON_MOVE ,"for as long they do not move zone");
+            }
             case "once_per_turn":{
                 return new he_OncePerTurn(effects as HeroEffect[]);
             }
@@ -108,6 +111,9 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             }
             case "on_slain":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_SLAIN ,"When %target% is slain");
+            }
+            case "on_move":{
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_MOVE ,"When %target% moves zone");
             }
             case "all_allies_have":{
                 return new hp_AllAlliesHave(effects as HeroPassive[]);
@@ -314,8 +320,8 @@ export class he_Attack extends HeroEffect{
 
     description(): string{
         return this.effects.map(
-            (e) => '<b>Attack: </b>'+e.description().replace(/%to target%/, "")
-        ).join(","); 
+            (e) => '<b>Attack: </b>'+e.description().replace(/%to target%/, "").replace(/%target%/, "target")
+        ).join(", then "); 
     }
 }
 
@@ -348,7 +354,7 @@ class he_RangedAttack extends HeroEffect{
 
     description(): string{
         return this.effects.map(
-            (e) => '<b>Ranged Attack: </b>'+e.description().replace(/%to target%/, "")
+            (e) => '<b>Ranged Attack: </b>'+e.description().replace(/%to target%/, "").replace(/%target%/, "target")
         ).join(","); 
     }
 }

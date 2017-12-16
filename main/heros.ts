@@ -298,8 +298,9 @@ export class Hero extends Game.Choosable{
                 if(this.$hero){
                     this.$hero.removeClass('bounceOut').remove() 
                 }
+
+
                 if(ally){
-                    console.log(ally)
                     if(ally.$hero){
                         ally.$hero.removeClass('bounceOut').remove() 
                     }
@@ -307,6 +308,10 @@ export class Hero extends Game.Choosable{
                     oldZone.addHero(this.getParty().label, ally);      
                 }
                 await zone.addHero(this.getParty().label, this)
+                await this.onTrigger(Game.GameEvent.ON_MOVE)
+                if(ally){
+                    await ally.onTrigger(Game.GameEvent.ON_MOVE)
+                }
                 resolve();
             },1000)
         })

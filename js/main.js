@@ -24,6 +24,14 @@ var Role;
     Role["MAGE"] = "mage";
     Role["NO_ROLE"] = "none";
 })(Role = exports.Role || (exports.Role = {}));
+function fitText($e) {
+    $e.each((i, element) => {
+        if (element.offsetHeight - 5 < element.scrollHeight) {
+            $(element).addClass('fit-text');
+        }
+    });
+}
+exports.fitText = fitText;
 function parseCard(json) {
     if (json.type == "class" || json.type == "race") {
         let type = CardType.RACE;
@@ -65,7 +73,7 @@ class Card extends Game.Choosable {
         }
         this.$card = $('<div/>').addClass('card--' + this.type).addClass('card');
         $('<div/>').addClass('card__titlebar').text(this.type + " - " + this.name).appendTo(this.$card);
-        //$('<img/>').addClass('card__icon').appendTo($card).attr('src','http://kaisalmon.com/cardgame/include/loadImage.php?icon='+this.icon)
+        $('<img/>').addClass('card__icon').appendTo(this.$card).attr('src', 'http://kaisalmon.com/cardgame/include/loadImage.php?icon=' + this.icon);
         this.addDetails();
         return this.$card;
     }
@@ -226,6 +234,9 @@ function _parseEffects(json, sourceName, sourceIcon) {
             case "until_attacks": {
                 return new he_UntilEvent(effects, Game.GameEvent.ON_ATTACKS, "until after their next attack");
             }
+            case "until_moves": {
+                return new he_UntilEvent(effects, Game.GameEvent.ON_MOVE, "for as long they do not move zone");
+            }
             case "once_per_turn": {
                 return new he_OncePerTurn(effects);
             }
@@ -250,6 +261,9 @@ function _parseEffects(json, sourceName, sourceIcon) {
             }
             case "on_slain": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_SLAIN, "When %target% is slain");
+            }
+            case "on_move": {
+                return new hp_OnEvent(effects, Game.GameEvent.ON_MOVE, "When %target% moves zone");
             }
             case "all_allies_have": {
                 return new hp_AllAlliesHave(effects);
@@ -442,7 +456,7 @@ class he_Attack extends HeroEffect {
         return this.effects[0].isValid(user, foe);
     }
     description() {
-        return this.effects.map((e) => '<b>Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
+        return this.effects.map((e) => '<b>Attack: </b>' + e.description().replace(/%to target%/, "").replace(/%target%/, "target")).join(", then ");
     }
 }
 exports.he_Attack = he_Attack;
@@ -471,7 +485,7 @@ class he_RangedAttack extends HeroEffect {
             .some((h) => this.effects[0].isValid(user, target));
     }
     description() {
-        return this.effects.map((e) => '<b>Ranged Attack: </b>' + e.description().replace(/%to target%/, "")).join(",");
+        return this.effects.map((e) => '<b>Ranged Attack: </b>' + e.description().replace(/%to target%/, "").replace(/%target%/, "target")).join(",");
     }
 }
 class he_Move extends HeroEffect {
@@ -697,6 +711,7 @@ var GameEvent;
     GameEvent[GameEvent["ON_ATTACKS"] = 3] = "ON_ATTACKS";
     GameEvent[GameEvent["ON_JOIN"] = 4] = "ON_JOIN";
     GameEvent[GameEvent["ON_SLAIN"] = 5] = "ON_SLAIN";
+    GameEvent[GameEvent["ON_MOVE"] = 6] = "ON_MOVE";
 })(GameEvent = exports.GameEvent || (exports.GameEvent = {}));
 class Party {
     constructor(label, game, deck) {
@@ -731,7 +746,7 @@ class Party {
     }
     getPossibleActions() {
         let r = [];
-        if (!this.playedHero && this.handHeros.some((c) => c.type == Cards.CardType.CLASS)) {
+        if (this.heros.length < 3 && !this.playedHero && this.handHeros.some((c) => c.type == Cards.CardType.CLASS)) {
             r = r.concat(this.handHeros.filter((c) => c.type == Cards.CardType.RACE));
         }
         if (this.heros.length > 0) {
@@ -877,7 +892,7 @@ class Party {
                 this.onUpdate();
             }
             for (let h of this.heros) {
-                h.onTrigger(GameEvent.ON_TURN_END);
+                yield h.onTrigger(GameEvent.ON_TURN_END);
             }
             console.log("Ending turn");
             return new Promise((resolve) => resolve());
@@ -1302,7 +1317,6 @@ class Hero extends Game.Choosable {
                         this.$hero.removeClass('bounceOut').remove();
                     }
                     if (ally) {
-                        console.log(ally);
                         if (ally.$hero) {
                             ally.$hero.removeClass('bounceOut').remove();
                         }
@@ -1310,6 +1324,10 @@ class Hero extends Game.Choosable {
                         oldZone.addHero(this.getParty().label, ally);
                     }
                     yield zone.addHero(this.getParty().label, this);
+                    yield this.onTrigger(Game.GameEvent.ON_MOVE);
+                    if (ally) {
+                        yield ally.onTrigger(Game.GameEvent.ON_MOVE);
+                    }
                     resolve();
                 }), 1000);
             });
@@ -1410,9 +1428,11 @@ class GameRenderer {
             .appendTo('body');
         this.$handA = $('<div/>').css('position', 'fixed')
             .css('bottom', '0')
+            .css('display', 'flex')
             .appendTo('body');
         this.$handB = $('<div/>').css('position', 'absolute')
             .addClass('hand--B')
+            .css('display', 'flex')
             .css('top', '0')
             .appendTo('body');
         this.$board.empty();
@@ -1433,17 +1453,21 @@ class GameRenderer {
         catch (e) { }
         this.$handA.empty();
         for (let c of this.game.partyA.hand) {
-            c.render().appendTo(this.$handA);
+            let $c = c.render().appendTo(this.$handA);
+            Cards.fitText($c);
         }
         for (let c of this.game.partyA.handHeros) {
-            c.render().appendTo(this.$handA);
+            let $c = c.render().appendTo(this.$handA);
+            Cards.fitText($c);
         }
         this.$handB.empty();
         for (let c of this.game.partyB.hand) {
-            c.render().appendTo(this.$handB);
+            let $c = c.render().appendTo(this.$handB);
+            Cards.fitText($c);
         }
         for (let c of this.game.partyB.handHeros) {
-            c.render().appendTo(this.$handB);
+            let $c = c.render().appendTo(this.$handB);
+            Cards.fitText($c);
         }
     }
 }
@@ -1453,12 +1477,26 @@ let all_cards_json = [
                     { type: "move_random" }
                 ] }
         ] },
-    { name: "Thief", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 1, arcana: 0, health: 2, effects: [
+    { name: "Thief", type: "class", "role": "warrior", icon: "robber", strength: 1, arcana: 0, health: 2, effects: [
             { type: "action", effects: [
                     { type: "until_attacks", effects: [
                             { type: "invisible" }
                         ] },
                 ] },
+        ] },
+    { name: "Warlock", type: "class", "role": "mage", icon: "warlock-eye", strength: 0, arcana: 2, health: 9, effects: [
+            { type: "action", effects: [
+                    { type: "until_new_turn", effects: [
+                            { type: "all_allies_have", effects: [
+                                    { type: "on_end_turn", effects: [
+                                            { type: "damage", amount: "2" },
+                                        ] },
+                                ] },
+                        ] },
+                    { type: "ranged_attack", effects: [
+                            { type: "damage", amount: "A" },
+                        ] }
+                ] }
         ] },
     { name: "Wizard", type: "class", "role": "mage", icon: "pointy-hat", strength: 0, arcana: 2, health: 8, effects: [
             { type: "all_allies_have", effects: [
@@ -1469,7 +1507,15 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Squirrel", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+    { name: "Barbarian", type: "class", "role": "mage", icon: "barbarian", strength: 2, arcana: 0, health: 12, effects: [
+            { type: "on_join", effects: [
+                    { type: "move_random" },
+                    { type: "attack", effects: [
+                            { type: "damage", amount: "S" },
+                        ] }
+                ] }
+        ] },
+    { name: "Cat", type: "race", icon: "white-cat", strength: 1, arcana: 1, health: 10, effects: [
             { type: "while_damaged", effects: [
                     { type: "on_attacked", effects: [
                             { type: "once_per_turn", effects: [
@@ -1486,32 +1532,45 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Racoon", type: "race", icon: "bear-head", strength: 1, arcana: 1, health: 10, effects: [
+    { name: "Spider", type: "race", icon: "spider", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_join", effects: [
-                    { type: "damage", amount: "12" },
-                    { type: "heal", amount: "8" },
+                    { type: "ranged_attack", effects: [
+                            { type: "damage", amount: "2" },
+                            { type: "until_turn_ends", effects: [
+                                    { type: "staggered" },
+                                ] }
+                        ] }
                 ] }
         ] },
-    { name: "Hermit Crab", type: "race", icon: "person", strength: 1, arcana: 1, health: 10, effects: [
+    { name: "Hermit Crab", type: "race", icon: "crab", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_new_turn", effects: [
                     { type: "until_attacks", effects: [
                             { type: "armored" },
                         ] }
-                ] },
-            { type: "on_slain", effects: [
-                    { type: "all_foes", effects: [
-                            { type: "damage", amount: "5" }
+                ] }
+        ] },
+    { name: "Turtle", type: "race", icon: "turtle", strength: 1, arcana: 1, health: 10, effects: [
+            { type: "on_move", effects: [
+                    { type: "until_new_turn", effects: [
+                            { type: "armored" },
                         ] }
                 ] }
         ] },
     { name: "Magic Missile", type: "spell", icon: "ringed-beam", effects: [
             { type: "all_foes", effects: [
-                    { type: "damage", amount: "A + 1" }
+                    { type: "damage", amount: "A" }
                 ] }
         ] },
     { name: "Flaming Arrow", type: "spell", icon: "flaming-arrow", effects: [
             { type: "ranged_attack", effects: [
-                    { type: "damage", amount: "A" }
+                    { type: "damage", amount: "A + 1" }
+                ] }
+        ] },
+    { name: "Hold Person", type: "spell", icon: "teleport", effects: [
+            { type: "ranged_attack", effects: [
+                    { type: "until_moves", effects: [
+                            { type: "staggered" }
+                        ] }
                 ] }
         ] },
     { name: "Smite", type: "spell", icon: "winged-sword", effects: [
@@ -1519,7 +1578,7 @@ let all_cards_json = [
                     { type: "damage", amount: "A+S" }
                 ] }
         ] },
-    { name: "Shockwave", type: "spell", icon: "winged-sword", effects: [
+    { name: "Shockwave", type: "spell", icon: "sonic-boom", effects: [
             { type: "attack", effects: [
                     { type: "damage", amount: "S" }
                 ] },
