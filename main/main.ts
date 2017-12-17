@@ -66,7 +66,7 @@ let all_cards_json = [
         ]} 
     ]},
 
-    {name:"Thief", type:"class","role":"warrior", icon:"robber", strength:1, arcana:0, health:2, effects:[
+    {name:"Thief", type:"class","role":"rogue", icon:"robber", strength:1, arcana:0, health:2, effects:[
         {type:"action", effects:[
             {type:"until_attacks", effects:[
                 {type:"invisible"}
@@ -99,7 +99,7 @@ let all_cards_json = [
         ]} 
     ]}, 
 
-    {name:"Barbarian", type:"class","role":"mage", icon:"barbarian", strength:2, arcana:0, health:12, effects:[
+    {name:"Barbarian", type:"class","role":"warrior", icon:"barbarian", strength:2, arcana:0, health:12, effects:[
         {type:"on_join", effects:[
             {type:"move_random"}, 
             {type:"attack", effects:[
@@ -173,13 +173,13 @@ let all_cards_json = [
             ]} 
         ]} 
     ]},
-    {name:"Smite", type:"spell",icon:"winged-sword", effects:[
+    {name:"Smite", type:"invo",icon:"winged-sword", effects:[
         {type:"attack", effects:[
             {type:"damage", amount:"A+S"}
         ]} 
     ]},
 
-    {name:"Shockwave", type:"spell",icon:"sonic-boom", effects:[
+    {name:"Shockwave", type:"mano",icon:"sonic-boom", effects:[
         {type:"attack", effects:[
             {type:"damage", amount:"S"}
         ]}, 

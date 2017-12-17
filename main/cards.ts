@@ -7,10 +7,15 @@ export enum CardType {
     RACE = 'Race',
     CLASS = 'Class',
     SPELL = 'Spell',
+    MANO = 'Maneuver',
+    INVO = 'Invocation',
+    TRICK = 'Trick',
 }
 export enum Role {
     WARRIOR = 'Warrior',
-    MAGE = 'mage',
+    MAGE = 'Mage',
+    ROGUE = 'Rogue',
+    PRIEST = 'Priest',
     NO_ROLE = 'none',
 }
 
@@ -39,6 +44,14 @@ export function parseCard(json:any) : Card{
                 role = Role.MAGE; 
                 break; 
            } 
+           case 'priest': { 
+                role = Role.PRIEST; 
+                break; 
+           } 
+           case 'rogue': { 
+                role = Role.ROGUE; 
+                break; 
+           }
            case undefined: { 
                 role = Role.NO_ROLE;
                 break;
@@ -50,12 +63,33 @@ export function parseCard(json:any) : Card{
         return new HeroComponent(json.name, json.icon, type, role,
                                  json.strength, json.arcana, json.health,
                                  Effects.parseEffects(json.effects || [], json.name, json.icon) as Effects.HeroPassive[]);
-    }else if(json.type == "spell"){
-        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects, json.name, json.icon) as Effects.HeroEffect[]);
 
-    }else{
-        throw "Unknown card type "+json.type;
+    }else if(["spell", "trick", "mano", "invo"].indexOf(json.type) !== -1){
+        let type: CardType|undefined = undefined;
+        switch(json.type) { 
+           case 'spell': { 
+                type = CardType.SPELL; 
+                break; 
+            }
+           case 'invo': { 
+                type = CardType.INVO; 
+                break; 
+            }
+           case 'mano': { 
+                type = CardType.MANO; 
+                break; 
+           }
+           case 'trick': { 
+                type = CardType.TRICK; 
+                break; 
+           }
+        }
+        if(!type){
+            throw "Unknown card type "+json.type;
+        }
+        return new ActionCard(json.name, json.icon, type, Effects.parseEffects(json.effects, json.name, json.icon) as Effects.HeroEffect[]);
     }
+    throw "Unknown card type "+json.type;
 }
  
 export abstract class Card extends Game.Choosable{
@@ -139,6 +173,7 @@ export class HeroComponent extends Card{
             return
 
         var $card = this.$card;
+        $card.addClass('card--'+this.role);
         var $row = $('<div/>').addClass('card__stats').appendTo($card);
         $('<div/>').addClass('card__strength').appendTo($row).text(this.strength)
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana)

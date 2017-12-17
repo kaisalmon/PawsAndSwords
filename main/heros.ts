@@ -260,6 +260,31 @@ export class Hero extends Game.Choosable{
         if(!this.canUseActions()){
             return false;
         }
+        
+        let correct_role = false;
+        for(let r of this.getRoles()){
+            if(r == Cards.Role.WARRIOR && a.type == Cards.CardType.MANO){
+                correct_role = true;
+                break;
+            }
+            if(r == Cards.Role.MAGE && a.type == Cards.CardType.SPELL){
+                correct_role = true;
+                break;
+            }
+            if(r == Cards.Role.ROGUE && a.type == Cards.CardType.TRICK){
+                correct_role = true;
+                break;
+            }
+            if(r == Cards.Role.PRIEST && a.type == Cards.CardType.INVO){
+                correct_role = true;
+                break;
+            }
+        }
+
+        if(!correct_role){
+            return false;
+        }
+
         return a.effects[0].isValid(this, this);
     }
     async useAction(action: Cards.ActionCard) : Promise<{}>{
@@ -333,6 +358,11 @@ export class Hero extends Game.Choosable{
         } 
         var $inner = this.$hero.find('.hero');
         $inner.empty();
+
+        $inner.removeClass('hero--Warrior hero--Mage hero--Rogue hero--Priest');
+        for(let role of this.getRoles()){
+            $inner.addClass('hero--'+role);
+        }
 
         //Stats and Name
         $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo($inner);

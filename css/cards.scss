@@ -84,6 +84,7 @@
   &__icon{
     margin-left: 30px;
     filter: invert(100%);
+    mix-blend-mode: multiply;
     width: 50px;
     height: 50px;
 
@@ -95,6 +96,8 @@
     display:flex;
     justify-content:space-between;
     margin-bottom: 3px;
+    background: white;
+    border: 2px solid rgba(255,255,255,0.5);
   }
   &__strength, &__arcana, &__health, &__armored{
       @include text-outline(black);
@@ -108,6 +111,7 @@
         color:cyan;
       }
   }
+
   &__strength{
       @include icon(crossed-swords);
   }
@@ -131,6 +135,19 @@
   transition: transform 0.4s;
   &.active{
     transform: scale(1.2);
+  }
+
+  &--Invocation, &--Priest{
+    background: lightskyblue;
+  }
+  &--Maneuver, &--Warrior{
+    background: pink;
+  }
+  &--Spell, &--Mage{
+    background: lightslategray;
+  }
+  &--Trick, &--Rogue{
+    background: lightgreen;
   }
 
   $action_r: 40px;
@@ -186,12 +203,16 @@
 
   .hand--B &{
       transform: scalex(-1);
+      transition: opacity 0.5s, transform 0.5s, background 0s linear 0.2s;
       & > *{
           opacity: 1;
           transition: opacity 0s linear 0.2s;
       }
       &:not(.active) > *{
         opacity: 0;
+      }
+      &:not(.active){
+        background: darkgray;
       }
       &.active{
         transform: scale(1.2);

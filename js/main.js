@@ -17,11 +17,16 @@ var CardType;
     CardType["RACE"] = "Race";
     CardType["CLASS"] = "Class";
     CardType["SPELL"] = "Spell";
+    CardType["MANO"] = "Maneuver";
+    CardType["INVO"] = "Invocation";
+    CardType["TRICK"] = "Trick";
 })(CardType = exports.CardType || (exports.CardType = {}));
 var Role;
 (function (Role) {
     Role["WARRIOR"] = "Warrior";
-    Role["MAGE"] = "mage";
+    Role["MAGE"] = "Mage";
+    Role["ROGUE"] = "Rogue";
+    Role["PRIEST"] = "Priest";
     Role["NO_ROLE"] = "none";
 })(Role = exports.Role || (exports.Role = {}));
 function fitText($e) {
@@ -48,6 +53,14 @@ function parseCard(json) {
                 role = Role.MAGE;
                 break;
             }
+            case 'priest': {
+                role = Role.PRIEST;
+                break;
+            }
+            case 'rogue': {
+                role = Role.ROGUE;
+                break;
+            }
             case undefined: {
                 role = Role.NO_ROLE;
                 break;
@@ -58,12 +71,32 @@ function parseCard(json) {
         }
         return new HeroComponent(json.name, json.icon, type, role, json.strength, json.arcana, json.health, Effects.parseEffects(json.effects || [], json.name, json.icon));
     }
-    else if (json.type == "spell") {
-        return new ActionCard(json.name, json.icon, CardType.SPELL, Effects.parseEffects(json.effects, json.name, json.icon));
+    else if (["spell", "trick", "mano", "invo"].indexOf(json.type) !== -1) {
+        let type = undefined;
+        switch (json.type) {
+            case 'spell': {
+                type = CardType.SPELL;
+                break;
+            }
+            case 'invo': {
+                type = CardType.INVO;
+                break;
+            }
+            case 'mano': {
+                type = CardType.MANO;
+                break;
+            }
+            case 'trick': {
+                type = CardType.TRICK;
+                break;
+            }
+        }
+        if (!type) {
+            throw "Unknown card type " + json.type;
+        }
+        return new ActionCard(json.name, json.icon, type, Effects.parseEffects(json.effects, json.name, json.icon));
     }
-    else {
-        throw "Unknown card type " + json.type;
-    }
+    throw "Unknown card type " + json.type;
 }
 exports.parseCard = parseCard;
 class Card extends Game.Choosable {
@@ -131,6 +164,7 @@ class HeroComponent extends Card {
         if (!this.$card)
             return;
         var $card = this.$card;
+        $card.addClass('card--' + this.role);
         var $row = $('<div/>').addClass('card__stats').appendTo($card);
         $('<div/>').addClass('card__strength').appendTo($row).text(this.strength);
         $('<div/>').addClass('card__arcana').appendTo($row).text(this.arcana);
@@ -1055,6 +1089,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const Cards = require("./cards");
 const Effects = require("./effects");
 const Game = require("./game");
 const $ = require("jquery");
@@ -1273,6 +1308,28 @@ class Hero extends Game.Choosable {
         if (!this.canUseActions()) {
             return false;
         }
+        let correct_role = false;
+        for (let r of this.getRoles()) {
+            if (r == Cards.Role.WARRIOR && a.type == Cards.CardType.MANO) {
+                correct_role = true;
+                break;
+            }
+            if (r == Cards.Role.MAGE && a.type == Cards.CardType.SPELL) {
+                correct_role = true;
+                break;
+            }
+            if (r == Cards.Role.ROGUE && a.type == Cards.CardType.TRICK) {
+                correct_role = true;
+                break;
+            }
+            if (r == Cards.Role.PRIEST && a.type == Cards.CardType.INVO) {
+                correct_role = true;
+                break;
+            }
+        }
+        if (!correct_role) {
+            return false;
+        }
         return a.effects[0].isValid(this, this);
     }
     useAction(action) {
@@ -1348,6 +1405,10 @@ class Hero extends Game.Choosable {
         }
         var $inner = this.$hero.find('.hero');
         $inner.empty();
+        $inner.removeClass('hero--Warrior hero--Mage hero--Rogue hero--Priest');
+        for (let role of this.getRoles()) {
+            $inner.addClass('hero--' + role);
+        }
         //Stats and Name
         $('<div/>').addClass('hero__titlebar').text(this.getName()).appendTo($inner);
         let $row = $('<div/>').addClass('hero__stats').appendTo($inner);
@@ -1407,7 +1468,7 @@ class Amount {
 }
 exports.Amount = Amount;
 
-},{"./effects":2,"./game":3,"jquery":6}],5:[function(require,module,exports){
+},{"./cards":1,"./effects":2,"./game":3,"jquery":6}],5:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1477,7 +1538,7 @@ let all_cards_json = [
                     { type: "move_random" }
                 ] }
         ] },
-    { name: "Thief", type: "class", "role": "warrior", icon: "robber", strength: 1, arcana: 0, health: 2, effects: [
+    { name: "Thief", type: "class", "role": "rogue", icon: "robber", strength: 1, arcana: 0, health: 2, effects: [
             { type: "action", effects: [
                     { type: "until_attacks", effects: [
                             { type: "invisible" }
@@ -1507,7 +1568,7 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Barbarian", type: "class", "role": "mage", icon: "barbarian", strength: 2, arcana: 0, health: 12, effects: [
+    { name: "Barbarian", type: "class", "role": "warrior", icon: "barbarian", strength: 2, arcana: 0, health: 12, effects: [
             { type: "on_join", effects: [
                     { type: "move_random" },
                     { type: "attack", effects: [
@@ -1573,12 +1634,12 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Smite", type: "spell", icon: "winged-sword", effects: [
+    { name: "Smite", type: "invo", icon: "winged-sword", effects: [
             { type: "attack", effects: [
                     { type: "damage", amount: "A+S" }
                 ] }
         ] },
-    { name: "Shockwave", type: "spell", icon: "sonic-boom", effects: [
+    { name: "Shockwave", type: "mano", icon: "sonic-boom", effects: [
             { type: "attack", effects: [
                     { type: "damage", amount: "S" }
                 ] },

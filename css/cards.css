@@ -47,6 +47,7 @@
   .card__icon, .hero__icon {
     margin-left: 30px;
     filter: invert(100%);
+    mix-blend-mode: multiply;
     width: 50px;
     height: 50px; }
     .fit-text .card__icon, .fit-text .hero__icon {
@@ -54,7 +55,9 @@
   .card__stats, .hero__stats {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 3px; }
+    margin-bottom: 3px;
+    background: white;
+    border: 2px solid rgba(255, 255, 255, 0.5); }
   .card__strength, .card__arcana, .card__health, .card__armored, .hero__strength, .hero__arcana, .hero__health, .hero__armored {
     text-shadow: 2px 0px black, -2px 0px black, 0px  2px black, 0px -2px black, 2px 2px black, -2px 2px black, 2px -2px black, -2px -2px black;
     width: 1.6rem;
@@ -87,6 +90,14 @@
     line-height: 0.9em; }
   .card.active, .hero.active {
     transform: scale(1.2); }
+  .card--Invocation, .card--Priest, .hero--Invocation, .hero--Priest {
+    background: lightskyblue; }
+  .card--Maneuver, .card--Warrior, .hero--Maneuver, .hero--Warrior {
+    background: pink; }
+  .card--Spell, .card--Mage, .hero--Spell, .hero--Mage {
+    background: lightslategray; }
+  .card--Trick, .card--Rogue, .hero--Trick, .hero--Rogue {
+    background: lightgreen; }
   .card__action-wrapper, .hero__action-wrapper {
     height: 40px;
     position: absolute;
@@ -128,12 +139,15 @@
     opacity: 1;
     transition: visibility 0s linear 1s, opacity 0.3s linear 1s; }
   .hand--B .card, .hand--B .hero {
-    transform: scalex(-1); }
+    transform: scalex(-1);
+    transition: opacity 0.5s, transform 0.5s, background 0s linear 0.2s; }
     .hand--B .card > *, .hand--B .hero > * {
       opacity: 1;
       transition: opacity 0s linear 0.2s; }
     .hand--B .card:not(.active) > *, .hand--B .hero:not(.active) > * {
       opacity: 0; }
+    .hand--B .card:not(.active), .hand--B .hero:not(.active) {
+      background: darkgray; }
     .hand--B .card.active, .hand--B .hero.active {
       transform: scale(1.2); }
 
