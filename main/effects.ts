@@ -1,5 +1,6 @@
 import * as Heros from "./heros";
 import * as Game from "./game";
+import * as Cards from "./cards";
 
 export enum Keyword{
     ARMORED="Armored",
@@ -42,10 +43,46 @@ export function parseEffects(json: any, sourceName:string, sourceIcon:string): E
     return effects;
 }
 
+export function parseCardType(cardType: string): Cards.CardType{
+    switch(cardType){
+        case "spell":{
+            return Cards.CardType.SPELL; 
+        }
+        case "mano":{
+            return Cards.CardType.MANO; 
+        }
+        case "invo":{
+            return Cards.CardType.INVO; 
+        }
+        case "trick":{
+            return Cards.CardType.TRICK; 
+        }
+    }    
+    throw "Unknown Card Type "+cardType;
+}
+
+/* TODO: Allow specific effect types to be parsed, for now only attacks are supported */
+
+export function parseEffectType(effectType: string): string{
+    if(effectType != "attack"){
+        throw "Only attack effect types can be referenced in abilites";
+    }
+    return he_Attack.name; 
+    /*switch(effectType){
+        case "attack":{
+            return he_Attack; 
+        }
+    }    
+    throw "Unknown Effect Type "+effectType;
+    */
+}
+
 function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[]{
     return json.map((json_e: any) => {
         var amount : Heros.Amount| undefined = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
         var effects : Effect[] | undefined = json_e.effects ? parseEffects(json_e.effects, sourceName, sourceIcon) : undefined;
+        var cardType : Cards.CardType | undefined = json_e.card_type ? parseCardType(json_e.card_type) : undefined;
+        var effectType : string | undefined = json_e.effect_type;
         switch(json_e.type){
             //Hero Effects
             case "debug":{
@@ -96,6 +133,9 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             //Hero Passives
             case "action":{
                 return new hp_Action(effects as HeroEffect[]);
+            }
+            case "can_use_action":{
+                return new hp_CanUseAction(cardType, effectType);
             }
             case "on_new_turn":{
                 return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_NEW_TURN ,"At the start of each turn");
@@ -480,7 +520,33 @@ export class hp_Action extends HeroPassive{
         return this.effects;
     }
 }
+export class hp_CanUseAction extends HeroPassive{
+    cardType: Cards.CardType|undefined;
+    effectType: string|undefined;
+    constructor(cardType: Cards.CardType|undefined, effectType:string|undefined){
+        //parse Effect Type to ensure no exceptions are thrown:
+        if(effectType){
+            parseEffectType(effectType)
+        }
 
+        super();
+
+        this.effectType = effectType;
+        this.cardType = cardType;
+    }
+
+    description(): string{
+        let descr =  "%target% can use any "+this.cardType||"actions";
+        if(this.effectType){
+            if("ioueaIOUAE".indexOf(this.effectType[0]) == -1){
+                descr += " that is a "+ this.effectType;
+            }else{
+                descr += " that is an "+ this.effectType;
+            }
+        }
+        return descr;
+    }
+}
 export class hp_OnEvent extends HeroPassive{
     effects: HeroEffect[];
     trigger: Game.GameEvent;
