@@ -14,6 +14,18 @@ export abstract class CardArchetype{
     abstract description(): string;
 }
 
+export function parseCardArchetype(archetype:string){
+    switch(archetype){
+        case "attack":{
+            return new ca_Attack();
+        }
+        case "non_damaging":{
+            return new ca_NonDamaging();
+        }
+    }
+    throw "Unknown Card Archetype "+archetype;
+}
+
 export class ca_Attack extends CardArchetype{
     checkEffects(effects:Effects.Effect[]): boolean{
         for(let e of effects){
