@@ -281,7 +281,17 @@ export class Hero extends Game.Choosable{
             }
         }
 
-        if(!correct_role){
+        let role_override = false;
+        for(let e of this.getPassivesOfType(Effects.hp_CanUseAction)){
+            if(e.cardType == undefined || e.cardType == a.type){
+                if(e.cardArchetype == undefined || e.cardArchetype.checkCard(a)){
+                    role_override = true;
+                    break;
+                }
+            } 
+        }
+
+        if(!correct_role && !role_override){
             return false;
         }
 

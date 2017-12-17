@@ -19,7 +19,7 @@ export function parseCardArchetype(archetype:string){
         case "attack":{
             return new ca_Attack();
         }
-        case "non_damaging":{
+        case "non-damaging":{
             return new ca_NonDamaging();
         }
     }

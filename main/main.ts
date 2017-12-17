@@ -137,8 +137,13 @@ let all_cards_json = [
         ]} 
     ]},
 
-    {name:"Stag", type:"race",icon:"Stag", strength:0, arcana:0, health:10, effects:[
-        {type:"can_use_action", card_type:"invo", effect_type:"attack"} 
+    {name:"Stag", type:"race",icon:"stag-head", strength:0, arcana:0, health:10, effects:[
+        {type:"can_use_action", card_type:"invo", card_archetype:"attack"} 
+    ]},
+
+    {name:"Owl", type:"race",icon:"owl", strength:0, arcana:0, health:10, effects:[
+        {type:"can_use_action", card_type:"invo", card_archetype:"non-damaging"},
+        {type:"can_use_action", card_type:"spell", card_archetype:"non-damaging"} 
     ]},
 
     {name:"Turtle", type:"race",icon:"turtle", strength:1, arcana:1, health:10, effects:[
@@ -174,7 +179,9 @@ let all_cards_json = [
             {type:"damage", amount:"A+S"}
         ]} 
     ]},
-
+    {name:"Regenerate", type:"invo",icon:"hospital-cross", effects:[
+        {type:"heal", amount:"A+S+2"}
+    ]},
     {name:"Shockwave", type:"mano",icon:"sonic-boom", effects:[
         {type:"attack", effects:[
             {type:"damage", amount:"S"}

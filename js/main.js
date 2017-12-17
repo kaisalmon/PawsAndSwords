@@ -1,5 +1,66 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const Effects = require("./effects");
+class CardArchetype {
+    checkCard(card) {
+        return this.checkEffects(card.effects);
+    }
+}
+exports.CardArchetype = CardArchetype;
+function parseCardArchetype(archetype) {
+    switch (archetype) {
+        case "attack": {
+            return new ca_Attack();
+        }
+        case "non-damaging": {
+            return new ca_NonDamaging();
+        }
+    }
+    throw "Unknown Card Archetype " + archetype;
+}
+exports.parseCardArchetype = parseCardArchetype;
+class ca_Attack extends CardArchetype {
+    checkEffects(effects) {
+        for (let e of effects) {
+            if (e instanceof Effects.he_Attack) {
+                return true;
+            }
+        }
+        return false;
+    }
+    description() {
+        return "melee attack %card%";
+    }
+}
+exports.ca_Attack = ca_Attack;
+class ca_NonDamaging extends CardArchetype {
+    checkEffects(effects) {
+        for (let e of effects) {
+            if (deepSearch(e, Effects.he_Damage.name)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    description() {
+        return "non-damaging %card%";
+    }
+}
+exports.ca_NonDamaging = ca_NonDamaging;
+function deepSearch(effect, classString) {
+    if (effect.constructor.name == classString)
+        return true;
+    for (let child of effect.getChildEffects()) {
+        if (deepSearch(child, classString)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+},{"./effects":3}],2:[function(require,module,exports){
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -177,7 +238,7 @@ class HeroComponent extends Card {
 }
 exports.HeroComponent = HeroComponent;
 
-},{"./effects":2,"./game":3,"jquery":6}],2:[function(require,module,exports){
+},{"./effects":3,"./game":4,"jquery":7}],3:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -190,6 +251,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Heros = require("./heros");
 const Game = require("./game");
+const CardArchetypes = require("./cardarchetypes");
 const Cards = require("./cards");
 var Keyword;
 (function (Keyword) {
@@ -198,6 +260,9 @@ var Keyword;
     Keyword["STAGGERED"] = "Staggered";
 })(Keyword = exports.Keyword || (exports.Keyword = {}));
 class Effect {
+    getChildEffects() {
+        return [];
+    }
 }
 exports.Effect = Effect;
 class HeroEffect extends Effect {
@@ -243,27 +308,12 @@ function parseCardType(cardType) {
     throw "Unknown Card Type " + cardType;
 }
 exports.parseCardType = parseCardType;
-/* TODO: Allow specific effect types to be parsed, for now only attacks are supported */
-function parseEffectType(effectType) {
-    if (effectType != "attack") {
-        throw "Only attack effect types can be referenced in abilites";
-    }
-    return he_Attack.name;
-    /*switch(effectType){
-        case "attack":{
-            return he_Attack;
-        }
-    }
-    throw "Unknown Effect Type "+effectType;
-    */
-}
-exports.parseEffectType = parseEffectType;
 function _parseEffects(json, sourceName, sourceIcon) {
     return json.map((json_e) => {
         var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
         var effects = json_e.effects ? parseEffects(json_e.effects, sourceName, sourceIcon) : undefined;
         var cardType = json_e.card_type ? parseCardType(json_e.card_type) : undefined;
-        var effectType = json_e.effect_type;
+        var cardArchetype = json_e.card_archetype ? CardArchetypes.parseCardArchetype(json_e.card_archetype) : undefined;
         switch (json_e.type) {
             //Hero Effects
             case "debug": {
@@ -315,7 +365,7 @@ function _parseEffects(json, sourceName, sourceIcon) {
                 return new hp_Action(effects);
             }
             case "can_use_action": {
-                return new hp_CanUseAction(cardType, effectType);
+                return new hp_CanUseAction(cardType, cardArchetype);
             }
             case "on_new_turn": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_NEW_TURN, "At the start of each turn");
@@ -490,6 +540,9 @@ class he_AllFoes extends HeroEffect {
     description() {
         return this.effects.map((e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to all foe")).join(",");
     }
+    getChildEffect() {
+        return this.effects;
+    }
 }
 class he_Attack extends HeroEffect {
     constructor(effects) {
@@ -560,6 +613,9 @@ class he_RangedAttack extends HeroEffect {
     description() {
         return this.effects.map((e) => '<b>Ranged Attack: </b>' + e.description().replace(/%to target%/, "").replace(/%target%/, "target")).join(",");
     }
+    getChildEffect() {
+        return this.effects;
+    }
 }
 class he_Move extends HeroEffect {
     apply(user, target) {
@@ -625,6 +681,9 @@ class he_UntilEvent extends HeroEffect {
     description() {
         return '%target% has ' + this.effects.map((e) => e.description()).join(", ") + " " + this.description_text;
     }
+    getChildEffect() {
+        return this.effects;
+    }
 }
 exports.he_UntilEvent = he_UntilEvent;
 class he_OncePerTurn extends HeroEffect {
@@ -649,6 +708,9 @@ class he_OncePerTurn extends HeroEffect {
     description() {
         return this.effects.map((e) => e.description()).join(", ") + '<i>(Max once per turn)</i>';
     }
+    getChildEffect() {
+        return this.effects;
+    }
 }
 exports.he_OncePerTurn = he_OncePerTurn;
 class hp_Action extends HeroPassive {
@@ -659,29 +721,26 @@ class hp_Action extends HeroPassive {
     description() {
         return "<b>Action:</b> " + this.effects.map((e) => e.description()).join(", ");
     }
+    getChildEffect() {
+        return this.effects;
+    }
 }
 exports.hp_Action = hp_Action;
 class hp_CanUseAction extends HeroPassive {
-    constructor(cardType, effectType) {
-        //parse Effect Type to ensure no exceptions are thrown:
-        if (effectType) {
-            parseEffectType(effectType);
-        }
+    constructor(cardType, cardArchetype) {
         super();
-        this.effectType = effectType;
         this.cardType = cardType;
+        this.cardArchetype = cardArchetype;
     }
     description() {
-        let descr = "%target% can use any " + this.cardType || "actions";
-        if (this.effectType) {
-            if ("ioueaIOUAE".indexOf(this.effectType[0]) == -1) {
-                descr += " that is a " + this.effectType;
-            }
-            else {
-                descr += " that is an " + this.effectType;
-            }
+        let card_string = "card";
+        if (this.cardType) {
+            card_string = this.cardType;
         }
-        return descr;
+        if (this.cardArchetype) {
+            return "%target% can use any " + this.cardArchetype.description().replace("%card%", card_string);
+        }
+        return "%target% can use any " + card_string;
     }
 }
 exports.hp_CanUseAction = hp_CanUseAction;
@@ -695,6 +754,9 @@ class hp_OnEvent extends HeroPassive {
     description() {
         return this.description_text + ' ' + this.effects.map((e) => e.description()).join(", ");
     }
+    getChildEffect() {
+        return this.effects;
+    }
 }
 exports.hp_OnEvent = hp_OnEvent;
 class hp_AllAlliesHave extends HeroPassive {
@@ -704,6 +766,9 @@ class hp_AllAlliesHave extends HeroPassive {
     }
     description() {
         return "All allies have <i>\"" + this.effects.map((e) => e.description().replace(/%to target%/, "")).join(",") + "\"</i>";
+    }
+    getChildEffect() {
+        return this.effects;
     }
 }
 exports.hp_AllAlliesHave = hp_AllAlliesHave;
@@ -743,10 +808,13 @@ class hp_WhileCond extends HeroPassive {
             return this.effects.map((e) => e.description()).join(", ") + " " + this.description_text;
         }
     }
+    getChildEffect() {
+        return this.effects;
+    }
 }
 exports.hp_WhileCond = hp_WhileCond;
 
-},{"./cards":1,"./game":3,"./heros":4}],3:[function(require,module,exports){
+},{"./cardarchetypes":1,"./cards":2,"./game":4,"./heros":5}],4:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1141,7 +1209,7 @@ class Zone extends Choosable {
 }
 exports.Zone = Zone;
 
-},{"./cards":1,"./effects":2,"./heros":4,"jquery":6}],4:[function(require,module,exports){
+},{"./cards":2,"./effects":3,"./heros":5,"jquery":7}],5:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1390,7 +1458,16 @@ class Hero extends Game.Choosable {
                 break;
             }
         }
-        if (!correct_role) {
+        let role_override = false;
+        for (let e of this.getPassivesOfType(Effects.hp_CanUseAction)) {
+            if (e.cardType == undefined || e.cardType == a.type) {
+                if (e.cardArchetype == undefined || e.cardArchetype.checkCard(a)) {
+                    role_override = true;
+                    break;
+                }
+            }
+        }
+        if (!correct_role && !role_override) {
             return false;
         }
         return a.effects[0].isValid(this, this);
@@ -1531,7 +1608,7 @@ class Amount {
 }
 exports.Amount = Amount;
 
-},{"./cards":1,"./effects":2,"./game":3,"jquery":6}],5:[function(require,module,exports){
+},{"./cards":2,"./effects":3,"./game":4,"jquery":7}],6:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1666,8 +1743,12 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Stag", type: "race", icon: "Stag", strength: 0, arcana: 0, health: 10, effects: [
-            { type: "can_use_action", card_type: "invo", effect_type: "attack" }
+    { name: "Stag", type: "race", icon: "stag-head", strength: 0, arcana: 0, health: 10, effects: [
+            { type: "can_use_action", card_type: "invo", card_archetype: "attack" }
+        ] },
+    { name: "Owl", type: "race", icon: "owl", strength: 0, arcana: 0, health: 10, effects: [
+            { type: "can_use_action", card_type: "invo", card_archetype: "non-damaging" },
+            { type: "can_use_action", card_type: "spell", card_archetype: "non-damaging" }
         ] },
     { name: "Turtle", type: "race", icon: "turtle", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_move", effects: [
@@ -1697,6 +1778,9 @@ let all_cards_json = [
             { type: "attack", effects: [
                     { type: "damage", amount: "A+S" }
                 ] }
+        ] },
+    { name: "Regenerate", type: "invo", icon: "hospital-cross", effects: [
+            { type: "heal", amount: "A+S+2" }
         ] },
     { name: "Shockwave", type: "mano", icon: "sonic-boom", effects: [
             { type: "attack", effects: [
@@ -1731,7 +1815,7 @@ game.partyB.onUpdate = () => render.onUpdate();
     });
 })();
 
-},{"./cards":1,"./game":3,"jquery":6}],6:[function(require,module,exports){
+},{"./cards":2,"./game":4,"jquery":7}],7:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.2.1
  * https://jquery.com/
@@ -11986,4 +12070,4 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}]},{},[5]);
+},{}]},{},[6]);
