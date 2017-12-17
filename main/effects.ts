@@ -11,6 +11,9 @@ export abstract class Effect {
     sourceIcon: string;
     sourceName: string;
     abstract description(): string;
+    getChildEffects():Effect[]{
+        return [];
+    }
 }
 export abstract class HeroEffect extends Effect {
     abstract async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>;
@@ -275,6 +278,10 @@ class he_AllFoes extends HeroEffect{
             (e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to all foe")
         ).join(","); 
     }
+
+    getChildEffect(): Effect[]{
+        return this.effects;
+    }
 }
 
 export class he_Attack extends HeroEffect{
@@ -357,6 +364,9 @@ class he_RangedAttack extends HeroEffect{
             (e) => '<b>Ranged Attack: </b>'+e.description().replace(/%to target%/, "").replace(/%target%/, "target")
         ).join(","); 
     }
+    getChildEffect(): Effect[]{
+        return this.effects;
+    }
 }
 
 export class he_Move extends HeroEffect{
@@ -419,6 +429,9 @@ export class he_UntilEvent extends HeroEffect{
     description(): string{
         return '%target% has '+ this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
     }
+    getChildEffect(): Effect[]{
+        return this.effects;
+    }
 }
 
 export class he_OncePerTurn extends HeroEffect{
@@ -449,6 +462,9 @@ export class he_OncePerTurn extends HeroEffect{
             (e) => e.description()
         ).join(", ")+'<i>(Max once per turn)</i>'; 
     }
+    getChildEffect(): Effect[]{
+        return this.effects;
+    }
 }
 
 export class hp_Action extends HeroPassive{
@@ -459,6 +475,9 @@ export class hp_Action extends HeroPassive{
     }
     description(): string{
         return "<b>Action:</b> "+this.effects.map((e)=>e.description()).join(", "); 
+    }
+    getChildEffect(): Effect[]{
+        return this.effects;
     }
 }
 
@@ -475,6 +494,9 @@ export class hp_OnEvent extends HeroPassive{
     description(): string{
         return this.description_text +' '+ this.effects.map((e)=>e.description()).join(", "); 
     }
+    getChildEffect(): Effect[]{
+        return this.effects;
+    }
 }
 
 export class hp_AllAlliesHave extends HeroPassive{
@@ -489,6 +511,9 @@ export class hp_AllAlliesHave extends HeroPassive{
         return "All allies have <i>\""+this.effects.map(
             (e) => e.description().replace(/%to target%/, "")
         ).join(",")+"\"</i>"; 
+    }
+    getChildEffect(): Effect[]{
+        return this.effects;
     }
 }
 
@@ -533,5 +558,8 @@ export class hp_WhileCond extends HeroPassive{
         }else{
             return this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
         }
+    }
+    getChildEffect(): Effect[]{
+        return this.effects;
     }
 }
