@@ -137,12 +137,8 @@ let all_cards_json = [
         ]} 
     ]},
 
-    {name:"Hermit Crab", type:"race",icon:"crab", strength:1, arcana:1, health:10, effects:[
-        {type:"on_new_turn", effects:[
-            {type:"until_attacks", effects:[
-                {type:"armored"}, 
-            ]} 
-        ]} 
+    {name:"Stag", type:"race",icon:"Stag", strength:0, arcana:0, health:10, effects:[
+        {type:"can_use_action", card_type:"invo", effect_type:"attack"} 
     ]},
 
     {name:"Turtle", type:"race",icon:"turtle", strength:1, arcana:1, health:10, effects:[

@@ -190,6 +190,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Heros = require("./heros");
 const Game = require("./game");
+const Cards = require("./cards");
 var Keyword;
 (function (Keyword) {
     Keyword["ARMORED"] = "Armored";
@@ -224,10 +225,45 @@ function parseEffects(json, sourceName, sourceIcon) {
     return effects;
 }
 exports.parseEffects = parseEffects;
+function parseCardType(cardType) {
+    switch (cardType) {
+        case "spell": {
+            return Cards.CardType.SPELL;
+        }
+        case "mano": {
+            return Cards.CardType.MANO;
+        }
+        case "invo": {
+            return Cards.CardType.INVO;
+        }
+        case "trick": {
+            return Cards.CardType.TRICK;
+        }
+    }
+    throw "Unknown Card Type " + cardType;
+}
+exports.parseCardType = parseCardType;
+/* TODO: Allow specific effect types to be parsed, for now only attacks are supported */
+function parseEffectType(effectType) {
+    if (effectType != "attack") {
+        throw "Only attack effect types can be referenced in abilites";
+    }
+    return he_Attack.name;
+    /*switch(effectType){
+        case "attack":{
+            return he_Attack;
+        }
+    }
+    throw "Unknown Effect Type "+effectType;
+    */
+}
+exports.parseEffectType = parseEffectType;
 function _parseEffects(json, sourceName, sourceIcon) {
     return json.map((json_e) => {
         var amount = json_e.amount ? new Heros.Amount(json_e.amount) : undefined;
         var effects = json_e.effects ? parseEffects(json_e.effects, sourceName, sourceIcon) : undefined;
+        var cardType = json_e.card_type ? parseCardType(json_e.card_type) : undefined;
+        var effectType = json_e.effect_type;
         switch (json_e.type) {
             //Hero Effects
             case "debug": {
@@ -277,6 +313,9 @@ function _parseEffects(json, sourceName, sourceIcon) {
             //Hero Passives
             case "action": {
                 return new hp_Action(effects);
+            }
+            case "can_use_action": {
+                return new hp_CanUseAction(cardType, effectType);
             }
             case "on_new_turn": {
                 return new hp_OnEvent(effects, Game.GameEvent.ON_NEW_TURN, "At the start of each turn");
@@ -622,6 +661,30 @@ class hp_Action extends HeroPassive {
     }
 }
 exports.hp_Action = hp_Action;
+class hp_CanUseAction extends HeroPassive {
+    constructor(cardType, effectType) {
+        //parse Effect Type to ensure no exceptions are thrown:
+        if (effectType) {
+            parseEffectType(effectType);
+        }
+        super();
+        this.effectType = effectType;
+        this.cardType = cardType;
+    }
+    description() {
+        let descr = "%target% can use any " + this.cardType || "actions";
+        if (this.effectType) {
+            if ("ioueaIOUAE".indexOf(this.effectType[0]) == -1) {
+                descr += " that is a " + this.effectType;
+            }
+            else {
+                descr += " that is an " + this.effectType;
+            }
+        }
+        return descr;
+    }
+}
+exports.hp_CanUseAction = hp_CanUseAction;
 class hp_OnEvent extends HeroPassive {
     constructor(effects, trigger, description) {
         super();
@@ -683,7 +746,7 @@ class hp_WhileCond extends HeroPassive {
 }
 exports.hp_WhileCond = hp_WhileCond;
 
-},{"./game":3,"./heros":4}],3:[function(require,module,exports){
+},{"./cards":1,"./game":3,"./heros":4}],3:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1603,12 +1666,8 @@ let all_cards_json = [
                         ] }
                 ] }
         ] },
-    { name: "Hermit Crab", type: "race", icon: "crab", strength: 1, arcana: 1, health: 10, effects: [
-            { type: "on_new_turn", effects: [
-                    { type: "until_attacks", effects: [
-                            { type: "armored" },
-                        ] }
-                ] }
+    { name: "Stag", type: "race", icon: "Stag", strength: 0, arcana: 0, health: 10, effects: [
+            { type: "can_use_action", card_type: "invo", effect_type: "attack" }
         ] },
     { name: "Turtle", type: "race", icon: "turtle", strength: 1, arcana: 1, health: 10, effects: [
             { type: "on_move", effects: [
