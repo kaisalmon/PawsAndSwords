@@ -11,11 +11,16 @@
     "noEmitOnError": true,
     "strictNullChecks": true,
     "target": "es2015",
+    "experimentalDecorators": true,
     "sourceMap": true
   },
   "include": [
     "main/*.ts",
     "typings/**/*.d.ts"
+  ],
+  "exclude":[
+    "node_modules",
+    "typings"
   ]
 }
 
