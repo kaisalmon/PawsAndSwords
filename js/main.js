@@ -49,7 +49,6 @@ class ca_NonDamaging extends CardArchetype {
 }
 exports.ca_NonDamaging = ca_NonDamaging;
 function deepSearch(effect, classString) {
-    console.log(effect.constructor.name, "vs", classString);
     if (effect.constructor.name == classString)
         return true;
     for (let child of effect.getChildEffects()) {
@@ -541,7 +540,7 @@ class he_AllFoes extends HeroEffect {
     description() {
         return this.effects.map((e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to all foe")).join(",");
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }
@@ -615,7 +614,7 @@ class he_RangedAttack extends HeroEffect {
     description() {
         return this.effects.map((e) => '<b>Ranged Attack: </b>' + e.description().replace(/%to target%/, "").replace(/%target%/, "target")).join(",");
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }
@@ -683,7 +682,7 @@ class he_UntilEvent extends HeroEffect {
     description() {
         return '%target% has ' + this.effects.map((e) => e.description()).join(", ") + " " + this.description_text;
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }
@@ -710,7 +709,7 @@ class he_OncePerTurn extends HeroEffect {
     description() {
         return this.effects.map((e) => e.description()).join(", ") + '<i>(Max once per turn)</i>';
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }
@@ -723,7 +722,7 @@ class hp_Action extends HeroPassive {
     description() {
         return "<b>Action:</b> " + this.effects.map((e) => e.description()).join(", ");
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }
@@ -756,7 +755,7 @@ class hp_OnEvent extends HeroPassive {
     description() {
         return this.description_text + ' ' + this.effects.map((e) => e.description()).join(", ");
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }
@@ -769,7 +768,7 @@ class hp_AllAlliesHave extends HeroPassive {
     description() {
         return "All allies have <i>\"" + this.effects.map((e) => e.description().replace(/%to target%/, "")).join(",") + "\"</i>";
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }
@@ -810,7 +809,7 @@ class hp_WhileCond extends HeroPassive {
             return this.effects.map((e) => e.description()).join(", ") + " " + this.description_text;
         }
     }
-    getChildEffect() {
+    getChildEffects() {
         return this.effects;
     }
 }

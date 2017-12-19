@@ -304,7 +304,7 @@ export class he_AllFoes extends HeroEffect{
         ).join(","); 
     }
 
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
@@ -389,7 +389,7 @@ class he_RangedAttack extends HeroEffect{
             (e) => '<b>Ranged Attack: </b>'+e.description().replace(/%to target%/, "").replace(/%target%/, "target")
         ).join(","); 
     }
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
@@ -454,7 +454,7 @@ export class he_UntilEvent extends HeroEffect{
     description(): string{
         return '%target% has '+ this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
     }
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
@@ -487,7 +487,7 @@ export class he_OncePerTurn extends HeroEffect{
             (e) => e.description()
         ).join(", ")+'<i>(Max once per turn)</i>'; 
     }
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
@@ -501,7 +501,7 @@ export class hp_Action extends HeroPassive{
     description(): string{
         return "<b>Action:</b> "+this.effects.map((e)=>e.description()).join(", "); 
     }
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
@@ -540,7 +540,7 @@ export class hp_OnEvent extends HeroPassive{
     description(): string{
         return this.description_text +' '+ this.effects.map((e)=>e.description()).join(", "); 
     }
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
@@ -558,7 +558,7 @@ export class hp_AllAlliesHave extends HeroPassive{
             (e) => e.description().replace(/%to target%/, "")
         ).join(",")+"\"</i>"; 
     }
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
@@ -605,7 +605,7 @@ export class hp_WhileCond extends HeroPassive{
             return this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
         }
     }
-    getChildEffect(): Effect[]{
+    getChildEffects(): Effect[]{
         return this.effects;
     }
 }
