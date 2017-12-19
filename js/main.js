@@ -585,6 +585,9 @@ class he_Attack extends HeroEffect {
     description() {
         return this.effects.map((e) => '<b>Attack: </b>' + e.description().replace(/%to target%/, "").replace(/%target%/, "target")).join(", then ");
     }
+    getChildEffects() {
+        return this.effects;
+    }
 }
 exports.he_Attack = he_Attack;
 class he_RangedAttack extends HeroEffect {

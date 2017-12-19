@@ -46,7 +46,7 @@ export class TestCardArchetypes{
         let failing: Effects.Effect[] = [];
         let damage = new Effects.he_Damage( new Heros.Amount("3"));
 
-        failing.push(new Effects.he_AllFoes([damage]));
+        failing.push(new Effects.he_Attack([damage]));
         Expect(archetype.checkEffects(failing)).toBe(false);
     }
 
@@ -57,5 +57,4 @@ export class TestCardArchetypes{
         passing.push(new Effects.he_Move());
         Expect(archetype.checkEffects(passing)).toBe(true);
     }
-
 }

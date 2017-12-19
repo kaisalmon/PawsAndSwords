@@ -39,7 +39,7 @@ class TestCardArchetypes {
         let archetype = new CardArchetypes.ca_NonDamaging();
         let failing = [];
         let damage = new Effects.he_Damage(new Heros.Amount("3"));
-        failing.push(new Effects.he_AllFoes([damage]));
+        failing.push(new Effects.he_Attack([damage]));
         alsatian_1.Expect(archetype.checkEffects(failing)).toBe(false);
     }
     caNonDamagingTest3() {

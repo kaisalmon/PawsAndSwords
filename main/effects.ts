@@ -355,6 +355,10 @@ export class he_Attack extends HeroEffect{
             (e) => '<b>Attack: </b>'+e.description().replace(/%to target%/, "").replace(/%target%/, "target")
         ).join(", then "); 
     }
+
+    getChildEffects(): Effect[]{
+        return this.effects;
+    }
 }
 
 class he_RangedAttack extends HeroEffect{
