@@ -360,6 +360,12 @@ function _parseEffects(json, sourceName, sourceIcon) {
             case "once_per_turn": {
                 return new he_OncePerTurn(effects);
             }
+            case "draw_action": {
+                return new he_DrawCard();
+            }
+            case "draw_archetype": {
+                return new he_DrawArchetypeCard(cardType, cardArchetype);
+            }
             //Hero Passives
             case "action": {
                 return new hp_Action(effects);
@@ -717,6 +723,70 @@ class he_OncePerTurn extends HeroEffect {
     }
 }
 exports.he_OncePerTurn = he_OncePerTurn;
+class he_DrawCard extends HeroEffect {
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                target.party.drawCard();
+                return new Promise(resolve => resolve());
+            }
+            catch (e) {
+                throw new EffectFailed();
+            }
+        });
+    }
+    //is valid if the hero can move
+    isValid(user, target) {
+        return true;
+    }
+    description() {
+        return "%target%'s party draws a card";
+    }
+}
+exports.he_DrawCard = he_DrawCard;
+class he_DrawArchetypeCard extends HeroEffect {
+    constructor(cardType, cardArchetype) {
+        super();
+        this.cardType = cardType;
+        this.cardArchetype = cardArchetype;
+    }
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let deck = target.party.deck;
+                let f_deck = deck.filter((c) => {
+                    return (this.cardArchetype == undefined || this.cardArchetype.checkCard(c))
+                        && (this.cardType == undefined || c.type == this.cardType);
+                });
+                //TODO: Do not rely on the deck being shuffled
+                let c = f_deck.pop();
+                if (c) {
+                    target.party.hand.push(c);
+                    target.party.onUpdate();
+                }
+                return new Promise(resolve => resolve());
+            }
+            catch (e) {
+                throw new EffectFailed();
+            }
+        });
+    }
+    //is valid if the hero can move
+    isValid(user, target) {
+        return true;
+    }
+    description() {
+        let card_string = "card";
+        if (this.cardType) {
+            card_string = this.cardType;
+        }
+        if (this.cardArchetype) {
+            return "%target%'s party draws a random " + this.cardArchetype.description().replace("%card%", card_string) + " from their deck";
+        }
+        return "%target%'s party draws a random " + card_string + " from their deck";
+    }
+}
+exports.he_DrawArchetypeCard = he_DrawArchetypeCard;
 class hp_Action extends HeroPassive {
     constructor(effects) {
         super();
@@ -1680,6 +1750,11 @@ let all_cards_json = [
     { name: "Fighter", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 2, arcana: 0, health: 12, effects: [
             { type: "on_attacks", effects: [
                     { type: "move_random" }
+                ] }
+        ] },
+    { name: "Weapon Master", type: "class", "role": "warrior", icon: "diamond-hilt", strength: 2, arcana: 0, health: 12, effects: [
+            { type: "on_join", effects: [
+                    { type: "draw_archetype", card_archetype: "attack" }
                 ] }
         ] },
     { name: "Thief", type: "class", "role": "rogue", icon: "robber", strength: 1, arcana: 0, health: 2, effects: [

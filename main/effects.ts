@@ -114,6 +114,12 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             case "once_per_turn":{
                 return new he_OncePerTurn(effects as HeroEffect[]);
             }
+            case "draw_action":{
+                return new he_DrawCard();
+            }
+            case "draw_archetype":{
+                return new he_DrawArchetypeCard(cardType, cardArchetype);
+            }
 
             //Hero Passives
             case "action":{
@@ -493,6 +499,74 @@ export class he_OncePerTurn extends HeroEffect{
     }
     getChildEffects(): Effect[]{
         return this.effects;
+    }
+}
+
+export class he_DrawCard extends HeroEffect{
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        try{
+            target.party.drawCard();
+            return new Promise<{}>(resolve=>resolve());
+        }catch(e){
+            throw new EffectFailed();
+        }
+    }
+
+    //is valid if the hero can move
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return true;
+    }
+    description(): string{
+        return "%target%'s party draws a card";
+    }
+}
+
+export class he_DrawArchetypeCard extends HeroEffect{
+    cardType: Cards.CardType|undefined;
+    cardArchetype: CardArchetypes.CardArchetype|undefined;
+
+    constructor(cardType: Cards.CardType|undefined, cardArchetype:CardArchetypes.CardArchetype|undefined){
+        super();
+        this.cardType = cardType;
+        this.cardArchetype = cardArchetype;
+    }
+
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        try{
+            let deck = target.party.deck;
+            let f_deck = deck.filter((c)=>{
+                return (this.cardArchetype == undefined || this.cardArchetype.checkCard(c as Cards.ActionCard))
+                    && (this.cardType == undefined || c.type == this.cardType)
+            });
+            
+            //TODO: Do not rely on the deck being shuffled
+            let c = f_deck.pop();
+            if(c){
+                target.party.hand.push(c);
+                target.party.onUpdate();
+            }
+            return new Promise<{}>(resolve=>resolve());
+        }catch(e){
+            throw new EffectFailed();
+        }
+    }
+
+    //is valid if the hero can move
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return true;
+    }
+    description(): string{
+        let card_string = "card";
+        if(this.cardType){
+            card_string = this.cardType;
+        }
+
+        if(this.cardArchetype){
+            return "%target%'s party draws a random "+this.cardArchetype.description().replace("%card%", card_string)+" from their deck";
+        }
+        return "%target%'s party draws a random "+ card_string+" from their deck";
+
+
     }
 }
 

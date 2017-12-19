@@ -66,6 +66,12 @@ let all_cards_json = [
         ]} 
     ]},
 
+    {name:"Weapon Master", type:"class","role":"warrior", icon:"diamond-hilt", strength:2, arcana:0, health:12, effects:[
+        {type:"on_join", effects:[
+            {type:"draw_archetype", card_archetype:"attack"} 
+        ]}
+    ]},
+
     {name:"Thief", type:"class","role":"rogue", icon:"robber", strength:1, arcana:0, health:2, effects:[
         {type:"action", effects:[
             {type:"until_attacks", effects:[
