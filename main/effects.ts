@@ -274,7 +274,7 @@ export class he_Heal extends HeroEffect{
 }
 
 
-class he_AllFoes extends HeroEffect{
+export class he_AllFoes extends HeroEffect{
     effects: HeroEffect[];
     
     constructor(effects: HeroEffect[]){

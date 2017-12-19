@@ -49,6 +49,7 @@ class ca_NonDamaging extends CardArchetype {
 }
 exports.ca_NonDamaging = ca_NonDamaging;
 function deepSearch(effect, classString) {
+    console.log(effect.constructor.name, "vs", classString);
     if (effect.constructor.name == classString)
         return true;
     for (let child of effect.getChildEffects()) {
@@ -544,6 +545,7 @@ class he_AllFoes extends HeroEffect {
         return this.effects;
     }
 }
+exports.he_AllFoes = he_AllFoes;
 class he_Attack extends HeroEffect {
     constructor(effects) {
         super();

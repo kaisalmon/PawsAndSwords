@@ -16,6 +16,7 @@
   },
   "include": [
     "main/*.ts",
+    "tests/*.spec.ts",
     "typings/**/*.d.ts"
   ],
   "exclude":[
