@@ -380,7 +380,7 @@ module.exports=[
 		]
 	},
 	{
-		"name": "Shock ave",
+		"name": "Shockwave",
 		"type": "mano",
 		"icon": "sonic-boom",
 		"effects": [

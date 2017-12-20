@@ -12,13 +12,12 @@ class TestCardLoading {
     LoadCardsTest() {
         try {
             let json = require("../json/cards.json");
-            console.error(json);
-            let obj = JSON.parse(json);
-            for (let c in obj)
-                alsatian_1.Expect(Cards.parseCard(c)).not.toBeDefined();
+            for (let c of json)
+                alsatian_1.Expect(Cards.parseCard(c)).toBeDefined();
         }
         catch (e) {
             console.error(e);
+            throw e;
         }
     }
 }

@@ -7,12 +7,11 @@ export class TestCardLoading{
     public LoadCardsTest() {
         try{
             let json = require("../json/cards.json");
-            console.error(json)
-            let obj = JSON.parse(json);
-            for(let c in obj)
-                Expect(Cards.parseCard(c)).not.toBeDefined()
+            for(let c of json)
+                Expect(Cards.parseCard(c)).toBeDefined()
         }catch(e){
             console.error(e);
+            throw e;
         }
     }
 }
