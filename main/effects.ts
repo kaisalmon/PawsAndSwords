@@ -120,6 +120,9 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             case "draw_archetype":{
                 return new he_DrawArchetypeCard(cardType, cardArchetype);
             }
+            case "discard_archetype":{
+                return new he_DiscardArchetypeCard(effects as HeroEffect[], cardType, cardArchetype);
+            }
 
             //Hero Passives
             case "action":{
@@ -512,7 +515,6 @@ export class he_DrawCard extends HeroEffect{
         }
     }
 
-    //is valid if the hero can move
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return true;
     }
@@ -551,7 +553,6 @@ export class he_DrawArchetypeCard extends HeroEffect{
         }
     }
 
-    //is valid if the hero can move
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return true;
     }
@@ -569,6 +570,72 @@ export class he_DrawArchetypeCard extends HeroEffect{
 
     }
 }
+
+export class he_DiscardArchetypeCard extends HeroEffect{
+    effects: HeroEffect[];
+    cardType: Cards.CardType|undefined;
+    cardArchetype: CardArchetypes.CardArchetype|undefined;
+
+    constructor(effects: HeroEffect[], cardType: Cards.CardType|undefined, cardArchetype:CardArchetypes.CardArchetype|undefined){
+        super();
+        this.effects = effects;
+        this.cardType = cardType;
+        this.cardArchetype = cardArchetype;
+    }
+
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        try{
+            let hand = user.party.hand;
+            let f_hand = hand.filter((c)=>{
+                return (this.cardArchetype == undefined || this.cardArchetype.checkCard(c as Cards.ActionCard))
+                    && (this.cardType == undefined || c.type == this.cardType)
+            });
+            
+            //TODO: Do not rely on the deck being shuffled
+            let c = f_hand[0]
+            if(f_hand.length != 1){
+                c = await user.party.makeChoice(f_hand);
+            }
+
+            if(c){
+                user.party.discard(c);
+                for(let e of this.effects){
+                    e.apply(user, target);
+                }
+            }else{
+                throw new EffectFailed();
+            }
+            return new Promise<{}>(resolve=>resolve());
+        }catch(e){
+            throw new EffectFailed();
+        }
+    }
+
+    //Is valid if a card which matches the archetype is in the party's hand
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        let hand = user.party.hand;
+        let f_hand = hand.filter((c)=>{
+            return (this.cardArchetype == undefined || this.cardArchetype.checkCard(c as Cards.ActionCard))
+                && (this.cardType == undefined || c.type == this.cardType)
+        });
+        return f_hand.length > 0;
+    }
+    
+    description(): string{
+        let card_string = "card";
+        if(this.cardType){
+            card_string = this.cardType;
+        }
+
+        if(this.cardArchetype){
+            return "Reveal a "+this.cardArchetype.description().replace("%card%", card_string)+":" + this.effects.map((e)=>e.description()).join(", ");
+        }
+        return "Reveal a "+ card_string+": "+ this.effects.map((e)=>e.description()).join(", ");
+
+
+    }
+}
+
 
 export class hp_Action extends HeroPassive{
     effects: HeroEffect[];

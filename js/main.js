@@ -1,413 +1,355 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports=[
-	{
-		"name": "Fighter",
-		"type": "class",
-		"role": "warrior",
-		"icon": "diamond-hilt",
-		"strength": 2,
-		"arcana": 0,
-		"health": 12,
-		"effects": [
-			{
-				"type": "on_attacks",
-				"effects": [
-					{
-						"type": "move_random"
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Weapon Master",
-		"type": "class",
-		"role": "warrior",
-		"icon": "diamond-hilt",
-		"strength": 2,
-		"arcana": 0,
-		"health": 12,
-		"effects": [
-			{
-				"type": "on_join",
-				"effects": [
-					{
-						"type": "draw_archetype",
-						"card_archetype": "attack"
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Thief",
-		"type": "class",
-		"role": "rogue",
-		"icon": "robber",
-		"strength": 1,
-		"arcana": 0,
-		"health": 2,
-		"effects": [
-			{
-				"type": "action",
-				"effects": [
-					{
-						"type": "until_attacks",
-						"effects": [
-							{
-								"type": "invisible"
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Warlock",
-		"type": "class",
-		"role": "mage",
-		"icon": "warlock-eye",
-		"strength": 0,
-		"arcana": 2,
-		"health": 9,
-		"effects": [
-			{
-				"type": "action",
-				"effects": [
-					{
-						"type": "until_new_turn",
-						"effects": [
-							{
-								"type": "all_allies_have",
-								"effects": [
-									{
-										"type": "on_end_turn",
-										"effects": [
-											{
-												"type": "damage",
-												"amount": "2"
-											}
-										]
-									}
-								]
-							}
-						]
-					},
-					{
-						"type": "ranged_attack",
-						"effects": [
-							{
-								"type": "damage",
-								"amount": "A"
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Wizard",
-		"type": "class",
-		"role": "mage",
-		"icon": "pointy-hat",
-		"strength": 0,
-		"arcana": 2,
-		"health": 8,
-		"effects": [
-			{
-				"type": "action",
-				"effects": [
-					{
-						"type": "draw_archetype",
-						"card_type": "spell"
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Barbarian",
-		"type": "class",
-		"role": "warrior",
-		"icon": "barbarian",
-		"strength": 2,
-		"arcana": 0,
-		"health": 12,
-		"effects": [
-			{
-				"type": "on_join",
-				"effects": [
-					{
-						"type": "move_random"
-					},
-					{
-						"type": "attack",
-						"effects": [
-							{
-								"type": "damage",
-								"amount": "S"
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Cat",
-		"type": "race",
-		"icon": "white-cat",
-		"strength": 1,
-		"arcana": 1,
-		"health": 10,
-		"effects": [
-			{
-				"type": "while_damaged",
-				"effects": [
-					{
-						"type": "on_attacked",
-						"effects": [
-							{
-								"type": "once_per_turn",
-								"effects": [
-									{
-										"type": "move_random"
-									}
-								]
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Bear",
-		"type": "race",
-		"icon": "bear-head",
-		"strength": 1,
-		"arcana": 1,
-		"health": 10,
-		"effects": [
-			{
-				"type": "action",
-				"effects": [
-					{
-						"type": "heal",
-						"amount": "8"
-					},
-					{
-						"type": "until_attacked",
-						"effects": [
-							{
-								"type": "staggered"
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Spider",
-		"type": "race",
-		"icon": "spider",
-		"strength": 1,
-		"arcana": 1,
-		"health": 10,
-		"effects": [
-			{
-				"type": "on_join",
-				"effects": [
-					{
-						"type": "ranged_attack",
-						"effects": [
-							{
-								"type": "damage",
-								"amount": "2"
-							},
-							{
-								"type": "until_turn_ends",
-								"effects": [
-									{
-										"type": "staggered"
-									}
-								]
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Stag",
-		"type": "race",
-		"icon": "stag-head",
-		"strength": 0,
-		"arcana": 0,
-		"health": 10,
-		"effects": [
-			{
-				"type": "can_use_action",
-				"card_type": "invo",
-				"card_archetype": "attack"
-			}
-		]
-	},
-	{
-		"name": "Owl",
-		"type": "race",
-		"icon": "owl",
-		"strength": 0,
-		"arcana": 0,
-		"health": 10,
-		"effects": [
-			{
-				"type": "can_use_action",
-				"card_type": "invo",
-				"card_archetype": "non-damaging"
-			},
-			{
-				"type": "can_use_action",
-				"card_type": "spell",
-				"card_archetype": "non-damaging"
-			}
-		]
-	},
-	{
-		"name": "Turtle",
-		"type": "race",
-		"icon": "turtle",
-		"strength": 1,
-		"arcana": 1,
-		"health": 10,
-		"effects": [
-			{
-				"type": "on_move",
-				"effects": [
-					{
-						"type": "until_new_turn",
-						"effects": [
-							{
-								"type": "armored"
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Magic Missile",
-		"type": "spell",
-		"icon": "ringed-beam",
-		"effects": [
-			{
-				"type": "all_foes",
-				"effects": [
-					{
-						"type": "damage",
-						"amount": "A"
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Flaming Arrow",
-		"type": "spell",
-		"icon": "flaming-arrow",
-		"effects": [
-			{
-				"type": "ranged_attack",
-				"effects": [
-					{
-						"type": "damage",
-						"amount": "A + 1"
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Hold Person",
-		"type": "spell",
-		"icon": "teleport",
-		"effects": [
-			{
-				"type": "ranged_attack",
-				"effects": [
-					{
-						"type": "until_moves",
-						"effects": [
-							{
-								"type": "staggered"
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Smite",
-		"type": "invo",
-		"icon": "winged-sword",
-		"effects": [
-			{
-				"type": "attack",
-				"effects": [
-					{
-						"type": "damage",
-						"amount": "A+S"
-					}
-				]
-			}
-		]
-	},
-	{
-		"name": "Regenerate",
-		"type": "invo",
-		"icon": "hospital-cross",
-		"effects": [
-			{
-				"type": "heal",
-				"amount": "A+S+2"
-			}
-		]
-	},
-	{
-		"name": "Shockwave",
-		"type": "mano",
-		"icon": "sonic-boom",
-		"effects": [
-			{
-				"type": "attack",
-				"effects": [
-					{
-						"type": "damage",
-						"amount": "S"
-					}
-				]
-			},
-			{
-				"type": "all_foes",
-				"effects": [
-					{
-						"type": "until_turn_ends",
-						"effects": [
-							{
-								"type": "staggered"
-							}
-						]
-					}
-				]
-			}
-		]
-	}
+module.exports=[{
+        "name": "Fighter",
+        "type": "class",
+        "role": "warrior",
+        "icon": "diamond-hilt",
+        "strength": 2,
+        "arcana": 0,
+        "health": 12,
+        "effects": [{
+            "type": "on_attacks",
+            "effects": [{
+                "type": "move_random"
+            }]
+        }]
+    },
+    {
+        "name": "Weapon Master",
+        "type": "class",
+        "role": "warrior",
+        "icon": "diamond-hilt",
+        "strength": 2,
+        "arcana": 0,
+        "health": 12,
+        "effects": [{
+            "type": "on_join",
+            "effects": [{
+                "type": "draw_archetype",
+                "card_archetype": "attack"
+            }]
+        }]
+    },
+    {
+        "name": "Thief",
+        "type": "class",
+        "role": "rogue",
+        "icon": "robber",
+        "strength": 1,
+        "arcana": 0,
+        "health": 2,
+        "effects": [{
+            "type": "action",
+            "effects": [{
+                "type": "until_attacks",
+                "effects": [{
+                    "type": "invisible"
+                }]
+            }]
+        }]
+    },
+    {
+        "name": "Warlock",
+        "type": "class",
+        "role": "mage",
+        "icon": "warlock-eye",
+        "strength": 0,
+        "arcana": 2,
+        "health": 9,
+        "effects": [{
+            "type": "action",
+            "effects": [{
+                    "type": "until_new_turn",
+                    "effects": [{
+                        "type": "all_allies_have",
+                        "effects": [{
+                            "type": "on_end_turn",
+                            "effects": [{
+                                "type": "damage",
+                                "amount": "2"
+                            }]
+                        }]
+                    }]
+                },
+                {
+                    "type": "ranged_attack",
+                    "effects": [{
+                        "type": "damage",
+                        "amount": "A"
+                    }]
+                }
+            ]
+        }]
+    },
+    {
+        "name": "Wizard",
+        "type": "class",
+        "role": "mage",
+        "icon": "pointy-hat",
+        "strength": 0,
+        "arcana": 2,
+        "health": 8,
+        "effects": [{
+            "type": "action",
+            "effects": [{
+                "type": "draw_archetype",
+                "card_type": "spell"
+            }]
+        }]
+    },
+    {
+        "name": "Barbarian",
+        "type": "class",
+        "role": "warrior",
+        "icon": "barbarian",
+        "strength": 2,
+        "arcana": 0,
+        "health": 12,
+        "effects": [{
+            "type": "on_join",
+            "effects": [{
+                    "type": "move_random"
+                },
+                {
+                    "type": "attack",
+                    "effects": [{
+                        "type": "damage",
+                        "amount": "S"
+                    }]
+                }
+            ]
+        }]
+    },
+    {
+        "name": "Cat",
+        "type": "race",
+        "icon": "white-cat",
+        "strength": 1,
+        "arcana": 1,
+        "health": 10,
+        "effects": [{
+            "type": "while_damaged",
+            "effects": [{
+                "type": "on_attacked",
+                "effects": [{
+                    "type": "once_per_turn",
+                    "effects": [{
+                        "type": "move_random"
+                    }]
+                }]
+            }]
+        }]
+    },
+    {
+        "name": "Bear",
+        "type": "race",
+        "icon": "bear-head",
+        "strength": 1,
+        "arcana": 1,
+        "health": 10,
+        "effects": [{
+            "type": "action",
+            "effects": [{
+                    "type": "heal",
+                    "amount": "8"
+                },
+                {
+                    "type": "until_attacked",
+                    "effects": [{
+                        "type": "staggered"
+                    }]
+                }
+            ]
+        }]
+    },
+    {
+        "name": "Spider",
+        "type": "race",
+        "icon": "spider",
+        "strength": 1,
+        "arcana": 1,
+        "health": 10,
+        "effects": [{
+            "type": "on_join",
+            "effects": [{
+                "type": "ranged_attack",
+                "effects": [{
+                        "type": "damage",
+                        "amount": "2"
+                    },
+                    {
+                        "type": "until_turn_ends",
+                        "effects": [{
+                            "type": "staggered"
+                        }]
+                    }
+                ]
+            }]
+        }]
+    },
+    {
+        "name": "Stag",
+        "type": "race",
+        "icon": "stag-head",
+        "strength": 0,
+        "arcana": 0,
+        "health": 10,
+        "effects": [{
+            "type": "can_use_action",
+            "card_type": "invo",
+            "card_archetype": "attack"
+        }]
+    },
+    {
+        "name": "Owl",
+        "type": "race",
+        "icon": "owl",
+        "strength": 0,
+        "arcana": 0,
+        "health": 10,
+        "effects": [{
+                "type": "can_use_action",
+                "card_type": "invo",
+                "card_archetype": "non-damaging"
+            },
+            {
+                "type": "can_use_action",
+                "card_type": "spell",
+                "card_archetype": "non-damaging"
+            }
+        ]
+    },
+    {
+        "name": "Turtle",
+        "type": "race",
+        "icon": "turtle",
+        "strength": 1,
+        "arcana": 1,
+        "health": 10,
+        "effects": [{
+            "type": "on_move",
+            "effects": [{
+                "type": "until_new_turn",
+                "effects": [{
+                    "type": "armored"
+                }]
+            }]
+        }]
+    },
+    {
+        "name": "Magic Missile",
+        "type": "spell",
+        "icon": "ringed-beam",
+        "effects": [{
+            "type": "all_foes",
+            "effects": [{
+                "type": "damage",
+                "amount": "A"
+            }]
+        }]
+    },
+    {
+        "name": "Flaming Arrow",
+        "type": "spell",
+        "icon": "flaming-arrow",
+        "effects": [{
+            "type": "ranged_attack",
+            "effects": [{
+                "type": "damage",
+                "amount": "A + 1"
+            }]
+        }]
+    },
+    {
+        "name": "Hold Person",
+        "type": "spell",
+        "icon": "teleport",
+        "effects": [{
+            "type": "ranged_attack",
+            "effects": [{
+                "type": "until_moves",
+                "effects": [{
+                    "type": "staggered"
+                }]
+            }]
+        }]
+    },
+    {
+        "name": "Smite",
+        "type": "invo",
+        "icon": "winged-sword",
+        "effects": [{
+            "type": "attack",
+            "effects": [{
+                "type": "damage",
+                "amount": "A+S"
+            }]
+        }]
+    },
+    {
+        "name": "Regenerate",
+        "type": "invo",
+        "icon": "hospital-cross",
+        "effects": [{
+            "type": "heal",
+            "amount": "A+S+2"
+        }]
+    },
+    {
+        "name": "Shockwave",
+        "type": "mano",
+        "icon": "sonic-boom",
+        "effects": [{
+                "type": "attack",
+                "effects": [{
+                    "type": "damage",
+                    "amount": "S"
+                }]
+            },
+            {
+                "type": "all_foes",
+                "effects": [{
+                    "type": "until_turn_ends",
+                    "effects": [{
+                        "type": "staggered"
+                    }]
+                }]
+            }
+        ]
+    },
+    {
+        "name": "Regain Focus",
+        "type": "mano",
+        "icon": "sword-tie",
+        "effects":[{
+            "type":"heal",
+            "amount":"S+2"
+        },{
+            "type":"draw_archetype",
+            "card_type":"mano"
+        }]
+    },
+    {
+        "name": "Pacifism",
+        "type": "invo",
+        "icon": "dove",
+        "effects":[{
+            "type":"discard_archetype",
+            "card_archetype": "attack",
+            "effects":[{
+                "type": "all_foes",
+                "effects": [{
+                    "type": "until_turn_ends",
+                    "effects": [{
+                        "type": "staggered"
+                    }]
+                }]
+            }]
+            },{
+                "type":"draw_archetype",
+                "card_archetype":"non-damaging"
+        }]
+    }
 ]
 
 },{}],2:[function(require,module,exports){
@@ -778,6 +720,9 @@ function _parseEffects(json, sourceName, sourceIcon) {
             case "draw_archetype": {
                 return new he_DrawArchetypeCard(cardType, cardArchetype);
             }
+            case "discard_archetype": {
+                return new he_DiscardArchetypeCard(effects, cardType, cardArchetype);
+            }
             //Hero Passives
             case "action": {
                 return new hp_Action(effects);
@@ -1147,7 +1092,6 @@ class he_DrawCard extends HeroEffect {
             }
         });
     }
-    //is valid if the hero can move
     isValid(user, target) {
         return true;
     }
@@ -1183,7 +1127,6 @@ class he_DrawArchetypeCard extends HeroEffect {
             }
         });
     }
-    //is valid if the hero can move
     isValid(user, target) {
         return true;
     }
@@ -1199,6 +1142,63 @@ class he_DrawArchetypeCard extends HeroEffect {
     }
 }
 exports.he_DrawArchetypeCard = he_DrawArchetypeCard;
+class he_DiscardArchetypeCard extends HeroEffect {
+    constructor(effects, cardType, cardArchetype) {
+        super();
+        this.effects = effects;
+        this.cardType = cardType;
+        this.cardArchetype = cardArchetype;
+    }
+    apply(user, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let hand = user.party.hand;
+                let f_hand = hand.filter((c) => {
+                    return (this.cardArchetype == undefined || this.cardArchetype.checkCard(c))
+                        && (this.cardType == undefined || c.type == this.cardType);
+                });
+                //TODO: Do not rely on the deck being shuffled
+                let c = f_hand[0];
+                if (f_hand.length != 1) {
+                    c = yield user.party.makeChoice(f_hand);
+                }
+                if (c) {
+                    user.party.discard(c);
+                    for (let e of this.effects) {
+                        e.apply(user, target);
+                    }
+                }
+                else {
+                    throw new EffectFailed();
+                }
+                return new Promise(resolve => resolve());
+            }
+            catch (e) {
+                throw new EffectFailed();
+            }
+        });
+    }
+    //Is valid if a card which matches the archetype is in the party's hand
+    isValid(user, target) {
+        let hand = user.party.hand;
+        let f_hand = hand.filter((c) => {
+            return (this.cardArchetype == undefined || this.cardArchetype.checkCard(c))
+                && (this.cardType == undefined || c.type == this.cardType);
+        });
+        return f_hand.length > 0;
+    }
+    description() {
+        let card_string = "card";
+        if (this.cardType) {
+            card_string = this.cardType;
+        }
+        if (this.cardArchetype) {
+            return "Reveal a " + this.cardArchetype.description().replace("%card%", card_string) + ":" + this.effects.map((e) => e.description()).join(", ");
+        }
+        return "Reveal a " + card_string + ": " + this.effects.map((e) => e.description()).join(", ");
+    }
+}
+exports.he_DiscardArchetypeCard = he_DiscardArchetypeCard;
 class hp_Action extends HeroPassive {
     constructor(effects) {
         super();
