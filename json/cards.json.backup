@@ -292,9 +292,6 @@
         "effects": [{
             "type": "heal",
             "amount": "A+S+2"
-        },{
-            "type": "draw_archetype",
-            "card_archetype": "non-damaging"
         }]
     },
     {

@@ -21,7 +21,7 @@ class TestCardArchetypes {
         let archetype = new CardArchetypes.ca_Attack();
         let failing = [];
         let attack = new Effects.he_Attack([new Effects.he_MoveRandom()]);
-        failing.push(new Effects.he_AllFoes([attack]));
+        failing.push(new Effects.he_EachFoe([attack]));
         alsatian_1.Expect(archetype.checkEffects(failing)).toBe(false);
     }
     caAttackTest3() {

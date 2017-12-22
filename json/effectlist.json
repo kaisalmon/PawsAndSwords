@@ -2,7 +2,8 @@
     "hero_effects":{
         "damage":["amount"],
         "heal":["amount"],
-        "all_foes":["hero_effects"],
+        "each_foe":["hero_effects"],
+        "each_ally":["hero_effects"],
         "attack":["hero_effects"],
         "ranged_attack":["hero_effects"],
         "move":[],

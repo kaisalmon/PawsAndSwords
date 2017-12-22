@@ -103,8 +103,11 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
                 if(amount)
                     return new he_Heal(amount);
             }
-            case "all_foes":{
-                return new he_AllFoes(effects as HeroEffect[]);
+            case "each_foe":{
+                return new he_EachFoe(effects as HeroEffect[]);
+            }
+            case "each_ally":{
+                return new he_EachAlly(effects as HeroEffect[]);
             }
             case "attack":{
                 return new he_Attack(effects as HeroEffect[]);
@@ -308,7 +311,7 @@ export class he_Heal extends HeroEffect{
 }
 
 
-export class he_AllFoes extends HeroEffect{
+export class he_EachFoe extends HeroEffect{
     effects: HeroEffect[];
     
     constructor(effects: HeroEffect[]){
@@ -335,6 +338,43 @@ export class he_AllFoes extends HeroEffect{
     description(): string{
         return this.effects.map(
             (e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to each foe")
+        ).join(","); 
+    }
+
+    getChildEffects(): Effect[]{
+        return this.effects;
+    }
+}
+
+export class he_EachAlly extends HeroEffect{
+    effects: HeroEffect[];
+    
+    constructor(effects: HeroEffect[]){
+        super();
+        this.effects = effects;
+    }
+
+    async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>{
+        let foes: Heros.Hero[] = [];
+        foes = target.getParty().heros;
+        for(let f of foes){
+            if(f == user)
+                continue
+            for(let e of this.effects){
+                await e.apply(user, f);
+            }
+        }
+        return new Promise((resolve)=>resolve());
+    }
+
+    //Is valid as long as at least one foe is a valid target for the first effect
+    isValid(user:Heros.Hero, target:Heros.Hero): boolean{
+        return target.getParty().heros.some((h)=>this.effects[0].isValid(user, target));
+    }
+
+    description(): string{
+        return this.effects.map(
+            (e) => e.description().replace(/%target%/, "each ally").replace(/%to target%/, "to each ally")
         ).join(","); 
     }
 
@@ -566,6 +606,7 @@ export class he_DrawArchetypeCard extends HeroEffect{
                     && (this.cardType == undefined || c.type == this.cardType)
             });
             
+            console.log(f_deck)
             //TODO: Do not rely on the deck being shuffled
             let c = f_deck.pop();
             if(c){
@@ -623,10 +664,15 @@ export class he_DiscardArchetypeCard extends HeroEffect{
             }
 
             if(c){
+                if(c.$card)
+                    c.$card.addClass("selected");
+                await Game.sleep(1)
                 user.party.discard(c);
+                target.party.onUpdate();
                 for(let e of this.effects){
                     e.apply(user, target);
                 }
+                target.party.onUpdate();
             }else{
                 throw new EffectFailed();
             }
@@ -653,9 +699,9 @@ export class he_DiscardArchetypeCard extends HeroEffect{
         }
 
         if(this.cardArchetype){
-            return "Reveal a "+this.cardArchetype.description().replace("%card%", card_string)+":" + this.effects.map((e)=>e.description()).join(", ");
-        }
-        return "Reveal a "+ card_string+": "+ this.effects.map((e)=>e.description()).join(", ");
+            return "discard a "+this.cardArchetype.description().replace("%card%", card_string)+":" + this.effects.map((e)=>e.description()).join(", ");
+        } 
+        return "discard a "+ card_string+": "+ this.effects.map((e)=>e.description()).join(", ");
 
 
     }

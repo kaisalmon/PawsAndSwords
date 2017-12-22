@@ -19,7 +19,7 @@ export class TestCardArchetypes{
         let failing: Effects.Effect[] = [];
         let attack: Effects.HeroEffect = new Effects.he_Attack([new Effects.he_MoveRandom()]);
 
-        failing.push(new Effects.he_AllFoes([attack]));
+        failing.push(new Effects.he_EachFoe([attack]));
         Expect(archetype.checkEffects(failing)).toBe(false);
     }
 
