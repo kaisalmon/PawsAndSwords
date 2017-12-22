@@ -1,356 +1,51 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports=[{
-        "name": "Fighter",
-        "type": "class",
-        "role": "warrior",
-        "icon": "diamond-hilt",
-        "strength": 2,
-        "arcana": 0,
-        "health": 12,
-        "effects": [{
-            "type": "on_attacks",
-            "effects": [{
-                "type": "move_random"
-            }]
-        }]
+module.exports={
+    "hero_effects":{
+        "damage":["amount"],
+        "heal":["amount"],
+        "all_foes":["hero_effects"],
+        "attack":["hero_effects"],
+        "ranged_attack":["hero_effects"],
+        "move":[],
+        "move_random":[],
+        "until_new_turn":["hero_passives"],
+        "until_turn_ends":["hero_passives"],
+        "until_attacked":["hero_passives"],
+        "until_attacks":["hero_passives"],
+        "until_moves":["hero_passives"],
+        "once_per_turn":["hero_effects"],
+        "draw_action":[],
+        "draw_archetype":["card_type","card_archetype"],
+        "discard_archetype":["hero_effects", "card_type","card_archetype"]
     },
-    {
-        "name": "Weapon Master",
-        "type": "class",
-        "role": "warrior",
-        "icon": "diamond-hilt",
-        "strength": 2,
-        "arcana": 0,
-        "health": 12,
-        "effects": [{
-            "type": "on_join",
-            "effects": [{
-                "type": "draw_archetype",
-                "card_archetype": "attack"
-            }]
-        }]
+    "hero_passives":{
+        "action":["hero_effects"],           
+        "can_use_action":["card_type","card_archetype"],           
+        "on_new_turn":["hero_effects"],           
+        "on_end_turn":["hero_effects"],           
+        "on_attacked":["hero_effects"],           
+        "on_attacks":["hero_effects"],           
+        "on_join":["hero_effects"],           
+        "on_slain":["hero_effects"],           
+        "on_move":["hero_effects"],           
+        "all_allies_have":["hero_passives"],           
+        "armored":[],           
+        "invisible":[],           
+        "staggered":[],           
+        "while_damaged":["hero_passives"],           
+        "while_alone":["hero_passives"]           
     },
-    {
-        "name": "Thief",
-        "type": "class",
-        "role": "rogue",
-        "icon": "robber",
-        "strength": 1,
-        "arcana": 0,
-        "health": 2,
-        "effects": [{
-            "type": "action",
-            "effects": [{
-                "type": "until_attacks",
-                "effects": [{
-                    "type": "invisible"
-                }]
-            }]
-        }]
-    },
-    {
-        "name": "Warlock",
-        "type": "class",
-        "role": "mage",
-        "icon": "warlock-eye",
-        "strength": 0,
-        "arcana": 2,
-        "health": 9,
-        "effects": [{
-            "type": "action",
-            "effects": [{
-                    "type": "until_new_turn",
-                    "effects": [{
-                        "type": "all_allies_have",
-                        "effects": [{
-                            "type": "on_end_turn",
-                            "effects": [{
-                                "type": "damage",
-                                "amount": "2"
-                            }]
-                        }]
-                    }]
-                },
-                {
-                    "type": "ranged_attack",
-                    "effects": [{
-                        "type": "damage",
-                        "amount": "A"
-                    }]
-                }
-            ]
-        }]
-    },
-    {
-        "name": "Wizard",
-        "type": "class",
-        "role": "mage",
-        "icon": "pointy-hat",
-        "strength": 0,
-        "arcana": 2,
-        "health": 8,
-        "effects": [{
-            "type": "action",
-            "effects": [{
-                "type": "draw_archetype",
-                "card_type": "spell"
-            }]
-        }]
-    },
-    {
-        "name": "Barbarian",
-        "type": "class",
-        "role": "warrior",
-        "icon": "barbarian",
-        "strength": 2,
-        "arcana": 0,
-        "health": 12,
-        "effects": [{
-            "type": "on_join",
-            "effects": [{
-                    "type": "move_random"
-                },
-                {
-                    "type": "attack",
-                    "effects": [{
-                        "type": "damage",
-                        "amount": "S"
-                    }]
-                }
-            ]
-        }]
-    },
-    {
-        "name": "Cat",
-        "type": "race",
-        "icon": "white-cat",
-        "strength": 1,
-        "arcana": 1,
-        "health": 10,
-        "effects": [{
-            "type": "while_damaged",
-            "effects": [{
-                "type": "on_attacked",
-                "effects": [{
-                    "type": "once_per_turn",
-                    "effects": [{
-                        "type": "move_random"
-                    }]
-                }]
-            }]
-        }]
-    },
-    {
-        "name": "Bear",
-        "type": "race",
-        "icon": "bear-head",
-        "strength": 1,
-        "arcana": 1,
-        "health": 10,
-        "effects": [{
-            "type": "action",
-            "effects": [{
-                    "type": "heal",
-                    "amount": "8"
-                },
-                {
-                    "type": "until_attacked",
-                    "effects": [{
-                        "type": "staggered"
-                    }]
-                }
-            ]
-        }]
-    },
-    {
-        "name": "Spider",
-        "type": "race",
-        "icon": "spider",
-        "strength": 1,
-        "arcana": 1,
-        "health": 10,
-        "effects": [{
-            "type": "on_join",
-            "effects": [{
-                "type": "ranged_attack",
-                "effects": [{
-                        "type": "damage",
-                        "amount": "2"
-                    },
-                    {
-                        "type": "until_turn_ends",
-                        "effects": [{
-                            "type": "staggered"
-                        }]
-                    }
-                ]
-            }]
-        }]
-    },
-    {
-        "name": "Stag",
-        "type": "race",
-        "icon": "stag-head",
-        "strength": 0,
-        "arcana": 0,
-        "health": 10,
-        "effects": [{
-            "type": "can_use_action",
-            "card_type": "invo",
-            "card_archetype": "attack"
-        }]
-    },
-    {
-        "name": "Owl",
-        "type": "race",
-        "icon": "owl",
-        "strength": 0,
-        "arcana": 0,
-        "health": 10,
-        "effects": [{
-                "type": "can_use_action",
-                "card_type": "invo",
-                "card_archetype": "non-damaging"
-            },
-            {
-                "type": "can_use_action",
-                "card_type": "spell",
-                "card_archetype": "non-damaging"
-            }
-        ]
-    },
-    {
-        "name": "Turtle",
-        "type": "race",
-        "icon": "turtle",
-        "strength": 1,
-        "arcana": 1,
-        "health": 10,
-        "effects": [{
-            "type": "on_move",
-            "effects": [{
-                "type": "until_new_turn",
-                "effects": [{
-                    "type": "armored"
-                }]
-            }]
-        }]
-    },
-    {
-        "name": "Magic Missile",
-        "type": "spell",
-        "icon": "ringed-beam",
-        "effects": [{
-            "type": "all_foes",
-            "effects": [{
-                "type": "damage",
-                "amount": "A"
-            }]
-        }]
-    },
-    {
-        "name": "Flaming Arrow",
-        "type": "spell",
-        "icon": "flaming-arrow",
-        "effects": [{
-            "type": "ranged_attack",
-            "effects": [{
-                "type": "damage",
-                "amount": "A + 1"
-            }]
-        }]
-    },
-    {
-        "name": "Hold Person",
-        "type": "spell",
-        "icon": "teleport",
-        "effects": [{
-            "type": "ranged_attack",
-            "effects": [{
-                "type": "until_moves",
-                "effects": [{
-                    "type": "staggered"
-                }]
-            }]
-        }]
-    },
-    {
-        "name": "Smite",
-        "type": "invo",
-        "icon": "winged-sword",
-        "effects": [{
-            "type": "attack",
-            "effects": [{
-                "type": "damage",
-                "amount": "A+S"
-            }]
-        }]
-    },
-    {
-        "name": "Regenerate",
-        "type": "invo",
-        "icon": "hospital-cross",
-        "effects": [{
-            "type": "heal",
-            "amount": "A+S+2"
-        }]
-    },
-    {
-        "name": "Shockwave",
-        "type": "mano",
-        "icon": "sonic-boom",
-        "effects": [{
-                "type": "attack",
-                "effects": [{
-                    "type": "damage",
-                    "amount": "S"
-                }]
-            },
-            {
-                "type": "all_foes",
-                "effects": [{
-                    "type": "until_turn_ends",
-                    "effects": [{
-                        "type": "staggered"
-                    }]
-                }]
-            }
-        ]
-    },
-    {
-        "name": "Regain Focus",
-        "type": "mano",
-        "icon": "sword-tie",
-        "effects":[{
-            "type":"heal",
-            "amount":"S+2"
-        },{
-            "type":"draw_archetype",
-            "card_type":"mano"
-        }]
-    },
-    {
-        "name": "Pacifism",
-        "type": "invo",
-        "icon": "dove",
-        "effects":[{
-            "type":"discard_archetype",
-            "card_archetype": "attack",
-            "effects":[{
-                "type": "all_foes",
-                "effects": [{
-                    "type": "until_turn_ends",
-                    "effects": [{
-                        "type": "staggered"
-                    }]
-                }]
-            }]
-            },{
-                "type":"draw_archetype",
-                "card_archetype":"non-damaging"
-        }]
-    }
-]
+    "card_archetypes":[
+        "non-damaging", 
+        "attack"
+    ],
+    "card_types":[
+        "mano",
+        "invo",
+        "spell",
+        "trick"
+    ]
+}
 
 },{}],2:[function(require,module,exports){
 "use strict";
@@ -426,7 +121,47 @@ function deepSearch(effect, classString) {
     return false;
 }
 
-},{"./effects":4}],3:[function(require,module,exports){
+},{"./effects":5}],3:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const $ = require("jquery");
+const Effects = require("./effects");
+function get_placeholder_text(e, effectlist) {
+    let obj = { "type": e };
+    let fields = effectlist[e];
+    console.log(fields);
+    for (let f of fields) {
+        if (f == "hero_effects") {
+            obj["effects"] = [{ "type": "placeholder_hero_effect" }];
+        }
+        if (f == "hero_passives") {
+            obj["effects"] = [{ "type": "placeholder_hero_passive" }];
+        }
+        if (f == "card_archetype") {
+            obj["card_archetype"] = "placeholder";
+        }
+        if (f == "amount") {
+            obj["amount"] = "X";
+        }
+    }
+    let descr = Effects.parseEffects([obj], "", "")[0].description();
+    descr = descr.replace("%target%", "a target");
+    descr = descr.replace("%to target%", "to a target");
+    return descr;
+}
+$(document).ready(function () {
+    let effectlist = require('../json/effectlist.json');
+    for (let e in effectlist.hero_effects) {
+        $('<h3/>').addClass("title--heroEffect").text(e).appendTo('body');
+        $('<div/>').html(get_placeholder_text(e, effectlist.hero_effects)).appendTo('body');
+    }
+    for (let e in effectlist.hero_passives) {
+        $('<h3/>').addClass("title--heroPassive").text(e).appendTo('body');
+        $('<div/>').html(get_placeholder_text(e, effectlist.hero_passives)).appendTo('body');
+    }
+});
+
+},{"../json/effectlist.json":1,"./effects":5,"jquery":8}],4:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -605,7 +340,7 @@ class HeroComponent extends Card {
 }
 exports.HeroComponent = HeroComponent;
 
-},{"./effects":4,"./game":5,"jquery":8}],4:[function(require,module,exports){
+},{"./effects":5,"./game":6,"jquery":8}],5:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1335,7 +1070,7 @@ class hp_WhileCond extends HeroPassive {
 }
 exports.hp_WhileCond = hp_WhileCond;
 
-},{"./cardarchetypes":2,"./cards":3,"./game":5,"./heros":6}],5:[function(require,module,exports){
+},{"./cardarchetypes":2,"./cards":4,"./game":6,"./heros":7}],6:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1730,7 +1465,7 @@ class Zone extends Choosable {
 }
 exports.Zone = Zone;
 
-},{"./cards":3,"./effects":4,"./heros":6,"jquery":8}],6:[function(require,module,exports){
+},{"./cards":4,"./effects":5,"./heros":7,"jquery":8}],7:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -2129,94 +1864,7 @@ class Amount {
 }
 exports.Amount = Amount;
 
-},{"./cards":3,"./effects":4,"./game":5,"jquery":8}],7:[function(require,module,exports){
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const Cards = require("./cards");
-const $ = require("jquery");
-const Game = require("./game");
-class GameRenderer {
-    constructor(game) {
-        this.game = game;
-        this.$board = $('<div/>').addClass('zones')
-            .appendTo('body');
-        this.$handA = $('<div/>').css('position', 'fixed')
-            .css('bottom', '0')
-            .css('display', 'flex')
-            .appendTo('body');
-        this.$handB = $('<div/>').css('position', 'absolute')
-            .addClass('hand--B')
-            .css('display', 'flex')
-            .css('top', '0')
-            .appendTo('body');
-        this.$board.empty();
-        for (let z of this.game.zones) {
-            z.getElem().appendTo(this.$board);
-        }
-        this.onUpdate();
-    }
-    onUpdate() {
-        try {
-            for (let h of this.game.partyA.heros) {
-                h.rerender();
-            }
-            for (let h of this.game.partyB.heros) {
-                h.rerender();
-            }
-        }
-        catch (e) { }
-        this.$handA.empty();
-        for (let c of this.game.partyA.hand) {
-            let $c = c.render().appendTo(this.$handA);
-            Cards.fitText($c);
-        }
-        for (let c of this.game.partyA.handHeros) {
-            let $c = c.render().appendTo(this.$handA);
-            Cards.fitText($c);
-        }
-        this.$handB.empty();
-        for (let c of this.game.partyB.hand) {
-            let $c = c.render().appendTo(this.$handB);
-            Cards.fitText($c);
-        }
-        for (let c of this.game.partyB.handHeros) {
-            let $c = c.render().appendTo(this.$handB);
-            Cards.fitText($c);
-        }
-    }
-}
-let all_cards_json = require("../json/cards.json");
-let deckA = [];
-let deckB = [];
-for (let card_json of all_cards_json) {
-    let c = Cards.parseCard(card_json);
-    let count = c instanceof Cards.ActionCard ? 3 : 1;
-    for (let i = 0; i < count; i++) {
-        c = Cards.parseCard(card_json);
-        deckA.push(c);
-        c = Cards.parseCard(card_json);
-        deckB.push(c);
-    }
-}
-let game = new Game.Game(deckA, deckB);
-let render = new GameRenderer(game);
-game.partyA.onUpdate = () => render.onUpdate();
-game.partyB.onUpdate = () => render.onUpdate();
-(function () {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield game.play();
-    });
-})();
-
-},{"../json/cards.json":1,"./cards":3,"./game":5,"jquery":8}],8:[function(require,module,exports){
+},{"./cards":4,"./effects":5,"./game":6,"jquery":8}],8:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.2.1
  * https://jquery.com/
@@ -12471,4 +12119,4 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}]},{},[7]);
+},{}]},{},[3]);

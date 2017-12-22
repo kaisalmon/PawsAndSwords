@@ -1,0 +1,47 @@
+{
+    "hero_effects":{
+        "damage":["amount"],
+        "heal":["amount"],
+        "all_foes":["hero_effects"],
+        "attack":["hero_effects"],
+        "ranged_attack":["hero_effects"],
+        "move":[],
+        "move_random":[],
+        "until_new_turn":["hero_passives"],
+        "until_turn_ends":["hero_passives"],
+        "until_attacked":["hero_passives"],
+        "until_attacks":["hero_passives"],
+        "until_moves":["hero_passives"],
+        "once_per_turn":["hero_effects"],
+        "draw_action":[],
+        "draw_archetype":["card_type","card_archetype"],
+        "discard_archetype":["hero_effects", "card_type","card_archetype"]
+    },
+    "hero_passives":{
+        "action":["hero_effects"],           
+        "can_use_action":["card_type","card_archetype"],           
+        "on_new_turn":["hero_effects"],           
+        "on_end_turn":["hero_effects"],           
+        "on_attacked":["hero_effects"],           
+        "on_attacks":["hero_effects"],           
+        "on_join":["hero_effects"],           
+        "on_slain":["hero_effects"],           
+        "on_move":["hero_effects"],           
+        "all_allies_have":["hero_passives"],           
+        "armored":[],           
+        "invisible":[],           
+        "staggered":[],           
+        "while_damaged":["hero_passives"],           
+        "while_alone":["hero_passives"]           
+    },
+    "card_archetypes":[
+        "non-damaging", 
+        "attack"
+    ],
+    "card_types":[
+        "mano",
+        "invo",
+        "spell",
+        "trick"
+    ]
+}

@@ -14,6 +14,18 @@ export abstract class CardArchetype{
     abstract description(): string;
 }
 
+export class PlaceholderCardArchetype extends CardArchetype{
+    checkEffects(effects:Effects.Effect[]): boolean{
+        throw "Placeholder being executed";
+    }
+    description(): string{
+        //return "special %card%"
+        return '<span class="placeholder placeholder--archetype">%card% matching some requirements</span>'
+    }
+}
+
+
+
 export function parseCardArchetype(archetype:string){
     switch(archetype){
         case "attack":{
@@ -21,6 +33,9 @@ export function parseCardArchetype(archetype:string){
         }
         case "non-damaging":{
             return new ca_NonDamaging();
+        }
+        case "placeholder":{
+            return new PlaceholderCardArchetype();
         }
     }
     throw "Unknown Card Archetype "+archetype;

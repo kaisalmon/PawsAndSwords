@@ -17,6 +17,25 @@ export abstract class Effect {
         return [];
     }
 }
+
+export class PlaceholderEffect extends Effect{
+    descr: string;
+    
+    constructor(descr:string){
+        super();
+        this.descr = descr;
+    }
+    description():string{
+        return this.descr;
+    }
+    apply(target: Heros.Hero, user: Heros.Hero):any{
+        throw "Placeholder being executed";
+    }
+    isValid(target: Heros.Hero, user: Heros.Hero):any{
+        throw "Placeholder being executed";
+    }
+}
+
 export abstract class HeroEffect extends Effect {
     abstract async apply(user:Heros.Hero, target:Heros.Hero): Promise<{}>;
     abstract isValid(user:Heros.Hero, target:Heros.Hero): boolean;
@@ -73,6 +92,9 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             case "debug":{
                 return new he_Debug();
             }
+            case "placeholder_hero_effect":{
+                return new PlaceholderEffect('<span class="placeholder placeholder--heroEffect">do something</span> %to target%') as HeroEffect;
+            }
             case "damage":{
                 if(amount)
                     return new he_Damage(amount);
@@ -125,6 +147,9 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
             }
 
             //Hero Passives
+            case "placeholder_hero_passive":{
+                return new PlaceholderEffect('<span class="placeholder placeholder--heroPassive">some passive effects</span>') as HeroEffect;
+            }
             case "action":{
                 return new hp_Action(effects as HeroEffect[]);
             }
@@ -309,7 +334,7 @@ export class he_AllFoes extends HeroEffect{
 
     description(): string{
         return this.effects.map(
-            (e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to all foe")
+            (e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to each foe")
         ).join(","); 
     }
 
