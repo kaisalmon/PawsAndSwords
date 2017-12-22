@@ -126,6 +126,7 @@ function deepSearch(effect, classString) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const $ = require("jquery");
 const Effects = require("./effects");
+const CardArchetypes = require("./cardarchetypes");
 function get_placeholder_text(e, effectlist) {
     let obj = { "type": e };
     let fields = effectlist[e];
@@ -152,16 +153,25 @@ function get_placeholder_text(e, effectlist) {
 $(document).ready(function () {
     let effectlist = require('../json/effectlist.json');
     for (let e in effectlist.hero_effects) {
-        $('<h3/>').addClass("title--heroEffect").text(e).appendTo('body');
-        $('<div/>').html(get_placeholder_text(e, effectlist.hero_effects)).appendTo('body');
+        let $e = $("<div/>").addClass('entry').appendTo('body');
+        $('<h3/>').addClass("title--heroEffect").text(e).appendTo($e);
+        $('<div/>').html(get_placeholder_text(e, effectlist.hero_effects)).appendTo($e);
     }
     for (let e in effectlist.hero_passives) {
-        $('<h3/>').addClass("title--heroPassive").text(e).appendTo('body');
-        $('<div/>').html(get_placeholder_text(e, effectlist.hero_passives)).appendTo('body');
+        let $e = $("<div/>").addClass('entry').appendTo('body');
+        $('<h3/>').addClass("title--heroPassive").text(e).appendTo($e);
+        $('<div/>').html(get_placeholder_text(e, effectlist.hero_passives)).appendTo($e);
+    }
+    for (let ca of effectlist.card_archetypes) {
+        let $ca = $("<div/>").addClass('entry').appendTo('body');
+        $('<h3/>').addClass("title--archetype").text(ca).appendTo($ca);
+        let description = CardArchetypes.parseCardArchetype(ca).description();
+        description = description.replace("%card%", '<span class="placeholder--type">action / spell / trick / invocation / manoeuvre</span>');
+        $('<div/>').html(description).appendTo($ca);
     }
 });
 
-},{"../json/effectlist.json":1,"./effects":5,"jquery":8}],4:[function(require,module,exports){
+},{"../json/effectlist.json":1,"./cardarchetypes":2,"./effects":5,"jquery":8}],4:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {

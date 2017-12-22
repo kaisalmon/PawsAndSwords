@@ -1,5 +1,6 @@
 import * as $ from 'jquery'
 import * as Effects from "./effects";
+import * as CardArchetypes from "./cardarchetypes";
 
 function get_placeholder_text(e:string, effectlist:any):string{
     let obj:any = {"type":e};
@@ -28,14 +29,22 @@ function get_placeholder_text(e:string, effectlist:any):string{
 $(document).ready(function(){
     let effectlist = require('../json/effectlist.json')
     for(let e in effectlist.hero_effects){
-        $('<h3/>').addClass("title--heroEffect").text(e).appendTo('body');
-        $('<div/>').html(get_placeholder_text(e, effectlist.hero_effects)).appendTo('body');
+        let $e = $("<div/>").addClass('entry').appendTo('body');
+        $('<h3/>').addClass("title--heroEffect").text(e).appendTo($e);
+        $('<div/>').html(get_placeholder_text(e, effectlist.hero_effects)).appendTo($e);
 
     }
     for(let e in effectlist.hero_passives){
-        $('<h3/>').addClass("title--heroPassive").text(e).appendTo('body');
-        $('<div/>').html(get_placeholder_text(e, effectlist.hero_passives)).appendTo('body');
-
+        let $e = $("<div/>").addClass('entry').appendTo('body');
+        $('<h3/>').addClass("title--heroPassive").text(e).appendTo($e);
+        $('<div/>').html(get_placeholder_text(e, effectlist.hero_passives)).appendTo($e);
+    }
+    for(let ca of effectlist.card_archetypes){
+        let $ca = $("<div/>").addClass('entry').appendTo('body');
+        $('<h3/>').addClass("title--archetype").text(ca).appendTo($ca);
+        let description = CardArchetypes.parseCardArchetype(ca).description();
+        description = description.replace("%card%",'<span class="placeholder--type">action / spell / trick / invocation / manoeuvre</span>')
+        $('<div/>').html(description).appendTo($ca);
     }
 
 })
