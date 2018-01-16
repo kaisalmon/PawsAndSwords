@@ -356,6 +356,18 @@ module.exports=[{
 },{}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const $ = require("jquery");
+const Cards = require("./cards");
+$(document).ready(function () {
+    let all_cards = require('../json/cards.json');
+    for (let json of all_cards) {
+        Cards.parseCard(json).render().appendTo('body');
+    }
+});
+
+},{"../json/cards.json":1,"./cards":4,"jquery":8}],3:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const Effects = require("./effects");
 class CardArchetype {
     checkCard(card) {
@@ -427,7 +439,7 @@ function deepSearch(effect, classString) {
     return false;
 }
 
-},{"./effects":4}],3:[function(require,module,exports){
+},{"./effects":5}],4:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -610,7 +622,7 @@ class HeroComponent extends Card {
 }
 exports.HeroComponent = HeroComponent;
 
-},{"./effects":4,"./game":5,"jquery":8}],4:[function(require,module,exports){
+},{"./effects":5,"./game":6,"jquery":8}],5:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1380,7 +1392,7 @@ class hp_WhileCond extends HeroPassive {
 }
 exports.hp_WhileCond = hp_WhileCond;
 
-},{"./cardarchetypes":2,"./cards":3,"./game":5,"./heros":6}],5:[function(require,module,exports){
+},{"./cardarchetypes":3,"./cards":4,"./game":6,"./heros":7}],6:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1775,7 +1787,7 @@ class Zone extends Choosable {
 }
 exports.Zone = Zone;
 
-},{"./cards":3,"./effects":4,"./heros":6,"jquery":8}],6:[function(require,module,exports){
+},{"./cards":4,"./effects":5,"./heros":7,"jquery":8}],7:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -2174,94 +2186,7 @@ class Amount {
 }
 exports.Amount = Amount;
 
-},{"./cards":3,"./effects":4,"./game":5,"jquery":8}],7:[function(require,module,exports){
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const Cards = require("./cards");
-const $ = require("jquery");
-const Game = require("./game");
-class GameRenderer {
-    constructor(game) {
-        this.game = game;
-        this.$board = $('<div/>').addClass('zones')
-            .appendTo('body');
-        this.$handA = $('<div/>').css('position', 'fixed')
-            .css('bottom', '0')
-            .css('display', 'flex')
-            .appendTo('body');
-        this.$handB = $('<div/>').css('position', 'absolute')
-            .addClass('hand--B')
-            .css('display', 'flex')
-            .css('top', '0')
-            .appendTo('body');
-        this.$board.empty();
-        for (let z of this.game.zones) {
-            z.getElem().appendTo(this.$board);
-        }
-        this.onUpdate();
-    }
-    onUpdate() {
-        try {
-            for (let h of this.game.partyA.heros) {
-                h.rerender();
-            }
-            for (let h of this.game.partyB.heros) {
-                h.rerender();
-            }
-        }
-        catch (e) { }
-        this.$handA.empty();
-        for (let c of this.game.partyA.hand) {
-            let $c = c.render().appendTo(this.$handA);
-            Cards.fitText($c);
-        }
-        for (let c of this.game.partyA.handHeros) {
-            let $c = c.render().appendTo(this.$handA);
-            Cards.fitText($c);
-        }
-        this.$handB.empty();
-        for (let c of this.game.partyB.hand) {
-            let $c = c.render().appendTo(this.$handB);
-            Cards.fitText($c);
-        }
-        for (let c of this.game.partyB.handHeros) {
-            let $c = c.render().appendTo(this.$handB);
-            Cards.fitText($c);
-        }
-    }
-}
-let all_cards_json = require("../json/cards.json");
-let deckA = [];
-let deckB = [];
-for (let card_json of all_cards_json) {
-    let c = Cards.parseCard(card_json);
-    let count = c instanceof Cards.ActionCard ? 3 : 1;
-    for (let i = 0; i < count; i++) {
-        c = Cards.parseCard(card_json);
-        deckA.push(c);
-        c = Cards.parseCard(card_json);
-        deckB.push(c);
-    }
-}
-let game = new Game.Game(deckA, deckB);
-let render = new GameRenderer(game);
-game.partyA.onUpdate = () => render.onUpdate();
-game.partyB.onUpdate = () => render.onUpdate();
-(function () {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield game.play();
-    });
-})();
-
-},{"../json/cards.json":1,"./cards":3,"./game":5,"jquery":8}],8:[function(require,module,exports){
+},{"./cards":4,"./effects":5,"./game":6,"jquery":8}],8:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.2.1
  * https://jquery.com/
@@ -12516,4 +12441,4 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}]},{},[7]);
+},{}]},{},[2]);

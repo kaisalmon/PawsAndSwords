@@ -279,6 +279,10 @@ class Card extends Game.Choosable {
             return this.$card;
         }
         this.$card = $('<div/>').addClass('card--' + this.type).addClass('card');
+        $(this.$card).ready(() => {
+            if (this.$card)
+                fitText(this.$card);
+        });
         $('<div/>').addClass('card__titlebar').text(this.type + " - " + this.name).appendTo(this.$card);
         $('<img/>').addClass('card__icon').appendTo(this.$card).attr('src', 'http://kaisalmon.com/cardgame/include/loadImage.php?icon=' + this.icon);
         this.addDetails();
