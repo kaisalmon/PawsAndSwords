@@ -60,6 +60,9 @@ export class PlaceholderEffect extends Effect{
     descr_description():string{
         return this.descr;
     }
+    description():string{
+        return this.descr;
+    }
     apply(target: Heros.Hero, user: Heros.Hero):any{
         throw "Placeholder being executed";
     }

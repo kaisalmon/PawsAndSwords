@@ -26,7 +26,7 @@ export class TestEffectConfig{
             let obj:any = get_placeholder_obj(e, effectlist.hero_effects);
             let effect = Effects.parseEffects([obj],"","");
             Expect(effect[0]).toBeDefined;
-            Expect(effect[0].description()).toBeDefined;
+            Expect(effect[0].descr_root()).toBeDefined;
         }
     }
 
@@ -37,7 +37,7 @@ export class TestEffectConfig{
             let obj:any = get_placeholder_obj(e, effectlist.hero_passives);
             let effect = Effects.parseEffects([obj],"","");
             Expect(effect[0]).toBeDefined;
-            Expect(effect[0].description()).toBeDefined;
+            Expect(effect[0].descr_root()).toBeDefined;
         }
     }
 

@@ -31,7 +31,7 @@ class TestEffectConfig {
             let obj = get_placeholder_obj(e, effectlist.hero_effects);
             let effect = Effects.parseEffects([obj], "", "");
             alsatian_1.Expect(effect[0]).toBeDefined;
-            alsatian_1.Expect(effect[0].description()).toBeDefined;
+            alsatian_1.Expect(effect[0].descr_root()).toBeDefined;
         }
     }
     PassiveConfigTest() {
@@ -40,7 +40,7 @@ class TestEffectConfig {
             let obj = get_placeholder_obj(e, effectlist.hero_passives);
             let effect = Effects.parseEffects([obj], "", "");
             alsatian_1.Expect(effect[0]).toBeDefined;
-            alsatian_1.Expect(effect[0].description()).toBeDefined;
+            alsatian_1.Expect(effect[0].descr_root()).toBeDefined;
         }
     }
 }
