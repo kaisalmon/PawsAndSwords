@@ -349,5 +349,22 @@
                 "type":"draw_archetype",
                 "card_archetype":"non-damaging"
         }]
+    },
+    {
+        "name": "Reckless Taunt",
+        "type": "mano",
+        "icon": "confrontation",
+        "effects":[
+            {"type":"until_new_turn", "effects":[
+                {"type":"on_attacked", "effects":[
+                    {"type":"heal", "amount":"S+S+S"}
+                ]}
+            ]},
+            {"type":"each_foe", "effects":[
+                {"type":"attack", "effects":[
+                    {"type":"damage", "amount":"1"}
+                ]}
+            ]}
+        ]
     }
 ]

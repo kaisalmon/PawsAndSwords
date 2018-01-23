@@ -12,9 +12,38 @@ export enum Keyword{
 export abstract class Effect {
     sourceIcon: string;
     sourceName: string;
-    abstract description(): string;
+
+    abstract descr_instruction(): string;
+    abstract descr_description(): string;
+    /*
+
+    description():string{
+        return "<b>!?!?!?</b>";
+    }
+    descr_instruction():string{
+        return this.description();
+    }
+    descr_description():string{
+        return this.description();
+    }
+
+    */
+    descr_root(): string{
+        return this.descr_instruction();
+    }
     getChildEffects():Effect[]{
         return [];
+    }
+    join(strings:string[], finalSep:string = "and"){
+        let last = strings.pop();
+        if(!last){
+            return "???";
+        }else{ 
+            if(strings.length == 0){
+                return last;
+            }
+            return strings.join(", ")+" "+finalSep+" "+last;
+        } 
     }
 }
 
@@ -25,7 +54,10 @@ export class PlaceholderEffect extends Effect{
         super();
         this.descr = descr;
     }
-    description():string{
+    descr_instruction():string{
+        return this.descr;
+    }
+    descr_description():string{
         return this.descr;
     }
     apply(target: Heros.Hero, user: Heros.Hero):any{
@@ -46,6 +78,13 @@ export abstract class HeroPassive extends Effect {
     getActivePassives(h: Heros.Hero): HeroPassive[]{
         return [this];
     } 
+    abstract description(): string;
+    descr_description(): string{
+        return this.description();
+    }
+    descr_instruction(): string{
+        return this.description();
+    }
 }
 
 export class EffectFailed extends Error {
@@ -160,25 +199,25 @@ function _parseEffects(json: any, sourceName:string, sourceIcon:string): Effect[
                 return new hp_CanUseAction(cardType, cardArchetype);
             }
             case "on_new_turn":{
-                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_NEW_TURN ,"At the start of each turn");
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_NEW_TURN ,"at the start of each turn");
             }
             case "on_end_turn":{
-                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_TURN_END ,"At the end of each turn");
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_TURN_END ,"at the end of each turn");
             }
             case "on_attacked":{
-                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKED ,"When %target% is attacked");
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKED ,"when %target% is attacked");
             }
             case "on_attacks":{
-                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKS ,"When %target% makes an attack");
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_ATTACKS ,"when %target% makes an attack");
             }
             case "on_join":{
-                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_JOIN ,"When %target% enters the arena");
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_JOIN ,"when %target% enters the arena");
             }
             case "on_slain":{
-                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_SLAIN ,"When %target% is slain");
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_SLAIN ,"when %target% is slain");
             }
             case "on_move":{
-                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_MOVE ,"When %target% moves zone");
+                return new hp_OnEvent(effects as HeroEffect[], Game.GameEvent.ON_MOVE ,"when %target% moves zone");
             }
             case "all_allies_have":{
                 return new hp_AllAlliesHave(effects as HeroPassive[]);
@@ -215,8 +254,11 @@ export class he_Debug extends HeroEffect{
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return true;
     }
-    description(): string{
+    descr_instruction(): string{
         return "PRINT DEBUG INFO FOR %target%";
+    }
+    descr_description(): string{
+        return "PRINTS DEBUG INFO FOR %target%";
     }
 }
 export class he_Damage extends HeroEffect{
@@ -261,7 +303,10 @@ export class he_Damage extends HeroEffect{
         return true;      
     }
 
-    description(): string{
+    descr_description(): string{
+        return "deals "+this.amount+" damage %to target%";
+    }
+    descr_instruction(): string{
         return "deal "+this.amount+" damage %to target%";
     }
 }
@@ -305,8 +350,11 @@ export class he_Heal extends HeroEffect{
         return target.damage != 0;      
     }
 
-    description(): string{
+    descr_instruction(): string{
         return "remove "+this.amount+" damage from %target%";
+    }
+    descr_description(): string{
+        return "removes "+this.amount+" damage from %target%";
     }
 }
 
@@ -335,10 +383,17 @@ export class he_EachFoe extends HeroEffect{
         return target.getParty().getOpponent().heros.some((h)=>this.effects[0].isValid(user, target));
     }
 
-    description(): string{
-        return this.effects.map(
-            (e) => e.description().replace(/%target%/, "each foe").replace(/%to target%/, "to each foe")
-        ).join(","); 
+    descr_description(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_description().replace(/%target%/, "each foe").replace(/%to target%/, "to each foe")
+        ); 
+        return this.join(descr,"then");
+    }
+    descr_instruction(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_instruction().replace(/%target%/, "each foe").replace(/%to target%/, "to each foe")
+        ); 
+        return this.join(descr,"then");
     }
 
     getChildEffects(): Effect[]{
@@ -372,12 +427,18 @@ export class he_EachAlly extends HeroEffect{
         return target.getParty().heros.some((h)=>this.effects[0].isValid(user, target));
     }
 
-    description(): string{
-        return this.effects.map(
-            (e) => e.description().replace(/%target%/, "each ally").replace(/%to target%/, "to each ally")
-        ).join(","); 
+    descr_description(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_description().replace(/%target%/, "each ally").replace(/%to target%/, "to each ally")
+        ); 
+        return this.join(descr,"then");
     }
-
+    descr_instruction(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_instruction().replace(/%target%/, "each ally").replace(/%to target%/, "to each ally")
+        ); 
+        return this.join(descr,"then");
+    }
     getChildEffects(): Effect[]{
         return this.effects;
     }
@@ -424,11 +485,27 @@ export class he_Attack extends HeroEffect{
         return this.effects[0].isValid(user, foe);
     }
 
-    description(): string{
-        return this.effects.map(
-            (e) => '<b>Attack: </b>'+e.description().replace(/%to target%/, "").replace(/%target%/, "target")
-        ).join(", then "); 
+    descr_root(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_instruction().replace(/%to target%/, "").replace(/%target%/, "target")
+        );
+        return '<b>Attack: </b>'+this.join(descr, "then"); 
     }
+    
+    descr_description(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_description().replace(/%to target%/, "").replace(/%target%/, "target")
+        );
+        return '%target% makes an attack which '+this.join(descr, "then");
+    }
+    
+    descr_instruction(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_description().replace(/%to target%/, "").replace(/%target%/, "target")
+        );
+        return 'force %target% to make an attack which '+this.join(descr, "then");
+    }
+
 
     getChildEffects(): Effect[]{
         return this.effects;
@@ -462,11 +539,27 @@ class he_RangedAttack extends HeroEffect{
             .some((h)=>this.effects[0].isValid(user, target));
     }
 
-    description(): string{
-        return this.effects.map(
-            (e) => '<b>Ranged Attack: </b>'+e.description().replace(/%to target%/, "").replace(/%target%/, "target")
-        ).join(","); 
+    descr_root(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_instruction().replace(/%to target%/, "").replace(/%target%/, "target")
+        );
+        return '<b>Ranged Attack: </b>'+this.join(descr, "then"); 
     }
+    
+    descr_description(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_description().replace(/%to target%/, "").replace(/%target%/, "target")
+        );
+        return '%target% makes a ranged attack which '+this.join(descr, "then");
+    }
+    
+    descr_instruction(): string{
+        let descr = this.effects.map(
+            (e) => e.descr_description().replace(/%to target%/, "").replace(/%target%/, "target")
+        );
+        return 'force the %target% to make a ranged attack which '+this.join(descr, "then");
+    }
+
     getChildEffects(): Effect[]{
         return this.effects;
     }
@@ -487,8 +580,11 @@ export class he_Move extends HeroEffect{
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return target.getMoveableZones().length > 0;
     }
-    description(): string{
+    descr_description(): string{
         return "%target% moves zone";
+    }
+    descr_instruction(): string{
+        return "forces %target% to move zone";
     }
 }
 export class he_MoveRandom extends HeroEffect{
@@ -506,8 +602,11 @@ export class he_MoveRandom extends HeroEffect{
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return target.getMoveableZones().length > 0;
     }
-    description(): string{
+    descr_description(): string{
         return "%target% moves to a random zone";
+    }
+    descr_instruction(): string{
+        return "force %target% to move to a random zone";
     }
 }
 export class he_UntilEvent extends HeroEffect{
@@ -529,8 +628,14 @@ export class he_UntilEvent extends HeroEffect{
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return true;
     }
-    description(): string{
-        return '%target% has '+ this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
+    descr_description(): string{
+        return 'gives %target% '+ this.join(this.effects.map((e)=>e.description()))+" "+this.description_text; 
+    }
+    descr_instruction(): string{
+        /*
+         * Should this be "the target has"
+         */
+        return 'give %target% <i>"'+ this.join(this.effects.map((e)=>e.description()))+'"</i> '+this.description_text; 
     }
     getChildEffects(): Effect[]{
         return this.effects;
@@ -560,10 +665,15 @@ export class he_OncePerTurn extends HeroEffect{
         return this.effects[0].isValid(user, target) && user.turnDisabledEffects.indexOf(this) == -1;
     }
 
-    description(): string{
+    descr_instruction(): string{
         return this.effects.map(
-            (e) => e.description()
-        ).join(", ")+'<i>(Max once per turn)</i>'; 
+            (e) => e.descr_instruction()
+        ).join(", ")+' <i> (Max once per turn)</i>'; 
+    }
+    descr_description(): string{
+        return this.effects.map(
+            (e) => e.descr_description()
+        ).join(", ")+' <i> (Max once per turn)</i>'; 
     }
     getChildEffects(): Effect[]{
         return this.effects;
@@ -583,8 +693,11 @@ export class he_DrawCard extends HeroEffect{
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return true;
     }
-    description(): string{
+    descr_instruction(): string{
         return "%target%'s party draws a card";
+    }
+    descr_description(): string{
+        return "allows %target%'s party to draw a card";
     }
 }
 
@@ -622,19 +735,29 @@ export class he_DrawArchetypeCard extends HeroEffect{
     isValid(user:Heros.Hero, target:Heros.Hero): boolean{
         return true;
     }
-    description(): string{
+
+    descr_instruction(): string{
         let card_string = "card";
         if(this.cardType){
             card_string = this.cardType;
         }
-
         if(this.cardArchetype){
             return "%target%'s party draws a random "+this.cardArchetype.description().replace("%card%", card_string)+" from their deck";
         }
         return "%target%'s party draws a random "+ card_string+" from their deck";
-
-
     }
+
+    descr_description(): string{
+        let card_string = "card";
+        if(this.cardType){
+            card_string = this.cardType;
+        }
+        if(this.cardArchetype){
+            return "allows %target%'s party to draw a random "+this.cardArchetype.description().replace("%card%", card_string)+" from their deck";
+        }
+        return "allows %target%'s party to draw a random "+ card_string+" from their deck";
+    }
+
 }
 
 export class he_DiscardArchetypeCard extends HeroEffect{
@@ -692,18 +815,28 @@ export class he_DiscardArchetypeCard extends HeroEffect{
         return f_hand.length > 0;
     }
     
-    description(): string{
+    descr_instruction(): string{
         let card_string = "card";
         if(this.cardType){
             card_string = this.cardType;
         }
 
         if(this.cardArchetype){
-            return "discard a "+this.cardArchetype.description().replace("%card%", card_string)+":" + this.effects.map((e)=>e.description()).join(", ");
+            return "discard a "+this.cardArchetype.description().replace("%card%", card_string)+": " + this.join(this.effects.map((e)=>e.descr_instruction()));
         } 
-        return "discard a "+ card_string+": "+ this.effects.map((e)=>e.description()).join(", ");
+        return "discard a "+ card_string+": "+ this.join(this.effects.map((e)=>e.descr_instruction()));
+    }
 
+    descr_description(): string{
+        let card_string = "card";
+        if(this.cardType){
+            card_string = this.cardType;
+        }
 
+        if(this.cardArchetype){
+            return "forces you to discard a "+this.cardArchetype.description().replace("%card%", card_string)+" in order to " + this.join(this.effects.map((e)=>e.descr_instruction()));
+        } 
+        return "forces you to discard a "+ card_string+" in order to "+ this.join(this.effects.map((e)=>e.descr_instruction()));
     }
 }
 
@@ -715,7 +848,7 @@ export class hp_Action extends HeroPassive{
         this.effects = effects; 
     }
     description(): string{
-        return "<b>Action:</b> "+this.effects.map((e)=>e.description()).join(", "); 
+        return "<b>Action:</b> "+this.join(this.effects.map((e)=>e.descr_instruction())); 
     }
     getChildEffects(): Effect[]{
         return this.effects;
@@ -754,7 +887,7 @@ export class hp_OnEvent extends HeroPassive{
         this.description_text = description;
     }
     description(): string{
-        return this.description_text +' '+ this.effects.map((e)=>e.description()).join(", "); 
+        return this.description_text +' '+ this.join(this.effects.map((e)=>e.descr_instruction())); 
     }
     getChildEffects(): Effect[]{
         return this.effects;
@@ -770,7 +903,7 @@ export class hp_AllAlliesHave extends HeroPassive{
     }
 
     description(): string{
-        return "All allies have <i>\""+this.effects.map(
+        return "all allies have <i>\""+this.effects.map(
             (e) => e.description().replace(/%to target%/, "")
         ).join(",")+"\"</i>"; 
     }
@@ -816,7 +949,7 @@ export class hp_WhileCond extends HeroPassive{
         //Improved grammar for when the only effect is an onEvent 
         if(this.effects.length == 1 && first_effect instanceof hp_OnEvent){
              var grandchildren_effects = first_effect.effects;
-             return first_effect.description_text +' '+this.description_text+' '+ grandchildren_effects.map((e)=>e.description()).join(", "); 
+             return first_effect.description_text +' '+this.description_text+' '+ this.join(grandchildren_effects.map((e)=>e.descr_instruction())); 
         }else{
             return this.effects.map((e)=>e.description()).join(", ")+" "+this.description_text; 
         }

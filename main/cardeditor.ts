@@ -20,7 +20,7 @@ function get_placeholder_text(e:string, effectlist:any):string{
             obj["amount"] = "X";
         }
     }
-    let descr =  Effects.parseEffects([obj],"","")[0].description();
+    let descr =  Effects.parseEffects([obj],"","")[0].descr_root();
     descr = descr.replace("%target%", "a target");
     descr = descr.replace("%to target%", "to a target");
     return descr;

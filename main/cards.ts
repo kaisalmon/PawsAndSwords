@@ -141,7 +141,7 @@ export class ActionCard extends Card{
         var $card = this.$card;
         var descriptions: string[] = this.effects.map(
             (e) => {
-                let descr = e.description();
+                let descr = e.descr_root();
                 return descr.charAt(0).toUpperCase() + descr.slice(1)
             }
         );
