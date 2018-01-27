@@ -131,7 +131,6 @@ const CardArchetypes = require("./cardarchetypes");
 function get_placeholder_text(e, effectlist) {
     let obj = { "type": e };
     let fields = effectlist[e];
-    console.log(fields);
     for (let f of fields) {
         if (f == "hero_effects") {
             obj["effects"] = [{ "type": "placeholder_hero_effect" }];
@@ -151,6 +150,38 @@ function get_placeholder_text(e, effectlist) {
     descr = descr.replace("%to target%", "to a target");
     return descr;
 }
+function random_effects(effectlist, catagory) {
+    let r = Math.random();
+    if (r < 0.9)
+        return [random_effect(effectlist, catagory)];
+    else
+        return [random_effect(effectlist, catagory), random_effect(effectlist, catagory)];
+}
+function random_effect(effectlist, catagory) {
+    let heroeffects = effectlist[catagory];
+    let keys = Object.keys(heroeffects);
+    let type = keys[Math.floor(keys.length * Math.random())];
+    let fields = heroeffects[type];
+    let result = { type };
+    if (fields.indexOf("hero_effects") != -1) {
+        result.effects = random_effects(effectlist, "hero_effects");
+    }
+    else if (fields.indexOf("hero_passives") != -1) {
+        result.effects = random_effects(effectlist, "hero_passives");
+    }
+    if (fields.indexOf("amount") != -1) {
+        result.amount = "" + (Math.floor(Math.random() * 4) + 1);
+    }
+    if (fields.indexOf("card_archetype") != -1) {
+        if (Math.random() > 0.25)
+            result.card_archetype = effectlist.card_archetypes[Math.floor(Math.random() * effectlist.card_archetypes.length)];
+    }
+    if (fields.indexOf("card_type") != -1) {
+        if (Math.random() > 0.33)
+            result.card_type = effectlist.card_types[Math.floor(Math.random() * effectlist.card_types.length)];
+    }
+    return result;
+}
 $(document).ready(function () {
     let effectlist = require('../json/effectlist.json');
     for (let e in effectlist.hero_effects) {
@@ -169,6 +200,13 @@ $(document).ready(function () {
         let description = CardArchetypes.parseCardArchetype(ca).description();
         description = description.replace("%card%", '<span class="placeholder--type">action / spell / trick / invocation / manoeuvre</span>');
         $('<div/>').html(description).appendTo($ca);
+    }
+    for (let i = 0; i < 10; i++) {
+        let json = random_effects(effectlist, i % 2 == 0 ? "hero_effects" : "hero_passives");
+        let e = Effects.parseEffects(json, "", "");
+        $('body').append(e[0].descr_root().replace(/%target%/g, "the hero").replace(/%to target%/g, "to the hero"));
+        $('body').append("<br>");
+        $('body').append("<br>");
     }
 });
 
@@ -898,10 +936,10 @@ class he_Move extends HeroEffect {
         return target.getMoveableZones().length > 0;
     }
     descr_description() {
-        return "%target% moves zone";
+        return "forces %target% to move zone";
     }
     descr_instruction() {
-        return "forces %target% to move zone";
+        return "%target% moves zone";
     }
 }
 exports.he_Move = he_Move;

@@ -49,6 +49,22 @@ module.exports=[{
         }]
     },
     {
+        "name": "Avenger",
+        "type": "class",
+        "role": "priest",
+        "icon": "sword-hilt",
+        "strength": 1,
+        "arcana": 0,
+        "health": 2,
+            "effects": [{
+                "type": "on_slain",
+                "effects": [{
+                    "type": "heal",
+                    "amount": "3"
+                }]
+            }]
+    },
+    {
         "name": "Warlock",
         "type": "class",
         "role": "mage",
@@ -1170,10 +1186,10 @@ class he_Move extends HeroEffect {
         return target.getMoveableZones().length > 0;
     }
     descr_description() {
-        return "%target% moves zone";
+        return "forces %target% to move zone";
     }
     descr_instruction() {
-        return "forces %target% to move zone";
+        return "%target% moves zone";
     }
 }
 exports.he_Move = he_Move;

@@ -584,10 +584,10 @@ export class he_Move extends HeroEffect{
         return target.getMoveableZones().length > 0;
     }
     descr_description(): string{
-        return "%target% moves zone";
+        return "forces %target% to move zone";
     }
     descr_instruction(): string{
-        return "forces %target% to move zone";
+        return "%target% moves zone";
     }
 }
 export class he_MoveRandom extends HeroEffect{
